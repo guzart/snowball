@@ -9,10 +9,16 @@
     "sourceMap": true,
     "baseUrl": ".",
     "types": ["node"],
+    "typeRoots": ["node_modules/@types", "./typings"],
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "test/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "test/**/*.ts",
+    "typings/**/*.d.ts"
+  ],
   "exclude": ["node_modules"]
 }

@@ -10,7 +10,7 @@
   version "9.4.3"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-9.4.3.tgz#121b21929abfa537f47099d1d0b21b337fe2c8a5"
 
-"@vue/cli-overlay@^3.0.0-alpha.9":
+"@vue/cli-overlay@^3.0.0-alpha.10":
   version "3.0.0-alpha.10"
   resolved "https://registry.yarnpkg.com/@vue/cli-overlay/-/cli-overlay-3.0.0-alpha.10.tgz#ed445e2943c9cdda404ef9c3a0550b60bd321ca6"
 
@@ -32,11 +32,11 @@
     typescript "^2.7.1"
 
 "@vue/cli-service@^3.0.0-alpha.10":
-  version "3.0.0-alpha.9"
-  resolved "https://registry.yarnpkg.com/@vue/cli-service/-/cli-service-3.0.0-alpha.9.tgz#bea297bd5c48bfb01c41a598ec9702e43a09cc0f"
+  version "3.0.0-alpha.10"
+  resolved "https://registry.yarnpkg.com/@vue/cli-service/-/cli-service-3.0.0-alpha.10.tgz#aa8bdea12020c85d7dd1a0b8b327c37f31c6321f"
   dependencies:
-    "@vue/cli-overlay" "^3.0.0-alpha.9"
-    "@vue/cli-shared-utils" "^3.0.0-alpha.9"
+    "@vue/cli-overlay" "^3.0.0-alpha.10"
+    "@vue/cli-shared-utils" "^3.0.0-alpha.10"
     "@vue/web-component-wrapper" "^1.2.0"
     address "^1.0.3"
     autodll-webpack-plugin "^0.3.8"
@@ -78,7 +78,7 @@
     webpack-merge "^4.1.1"
     yorkie "^1.0.3"
 
-"@vue/cli-shared-utils@^3.0.0-alpha.9":
+"@vue/cli-shared-utils@^3.0.0-alpha.10":
   version "3.0.0-alpha.10"
   resolved "https://registry.yarnpkg.com/@vue/cli-shared-utils/-/cli-shared-utils-3.0.0-alpha.10.tgz#04098ed4e1173a4958468b8cb4839bb592fe7b0d"
   dependencies:
