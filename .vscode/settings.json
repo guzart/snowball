@@ -1,0 +1,11 @@
+{
+  "[json]": {
+    "editor.formatOnSave": false,
+    "editor.quickSuggestions": {
+      "strings": true
+    }
+  },
+  "editor.formatOnSave": true,
+  "prettier.semi": false,
+  "prettier.singleQuote": true
+}
