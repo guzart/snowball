@@ -1,7 +1,15 @@
 <template>
 <div class="form-input">
   <label v-bind:for="id">{{label}}</label>
-  <input v-bind:type="type" v-bind:id="id" v-model="value" v-bind:placeholder="placeholder" v-bind:disabled="disabled" />
+  <input
+    ref="input"
+    v-bind:type="type"
+    v-bind:id="id"
+    v-bind:placeholder="placeholder"
+    v-bind:disabled="disabled"
+    v-bind:value="value"
+    v-on:input="updateValue($event.target.value)"
+  />
   <div v-if="successMessage" class="mod-message" >
     <SimpleIcon name="success" />{{ successMessage }}
   </div>
@@ -32,6 +40,13 @@ export default Vue.extend({
   },
   components: {
     SimpleIcon
+  },
+  methods: {
+    updateValue(value: string) {
+      const input = this.$refs.input as HTMLInputElement
+      input.value = value
+      this.$emit('input', value)
+    }
   }
 })
 </script>

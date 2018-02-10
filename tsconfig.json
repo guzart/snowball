@@ -1,18 +1,20 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "es2015",
-    "strict": true,
-    "jsx": "preserve",
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
+    "allowSyntheticDefaultImports": false,
     "baseUrl": ".",
-    "types": ["node"],
-    "typeRoots": ["node_modules/@types", "./typings"],
+    "jsx": "preserve",
+    "module": "es2015",
+    "moduleResolution": "node",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+    "sourceMap": true,
+    "strict": true,
+    "target": "es5",
+    "typeRoots": ["node_modules/@types", "./typings"],
+    "types": ["node"]
   },
   "include": [
     "src/**/*.ts",
