@@ -14,6 +14,10 @@ export default Vue.extend({
       type: Boolean,
       default: false
     },
+    size: {
+      type: String,
+      default: ''
+    },
     theme: {
       type: String,
       default: 'default'
@@ -26,10 +30,12 @@ export default Vue.extend({
   },
   computed: {
     classObject(): any {
-      return {
-        btn: true,
-        [`btn-${this.theme}`]: true
+      const { size, theme } = this
+      const classes = ['btn', `btn-${theme}`]
+      if (this.size != '') {
+        classes.push(`btn-${size}`)
       }
+      return classes
     },
     isDisabled(): boolean {
       return this.disabled || this.internalDisabled
@@ -67,6 +73,42 @@ export default Vue.extend({
 
     &:hover:not([disabled]) {
       background-color: alpha($bahamaBlue, 0.8);
+    }
+  }
+
+  &-danger {
+    color: $negativeRed;
+    border-color: alpha($negativeRed, 0.2);
+
+    &:hover:not([disabled]) {
+      color: $white;
+      background: alpha($negativeRed, 0.8);
+    }
+  }
+
+  &-cancel {
+    color: $black;
+    border-color: alpha($black, 0.2);
+
+    &:hover:not([disabled]) {
+      color: $white;
+      background: alpha($midnightBlue, 0.8);
+    }
+  }
+
+  &-medium {
+    font-size: px2rem(16);
+    padding: px2rem(11) px2rem(24);
+  }
+
+  &-large {
+    background: $everyDollarOrange;
+    color: $white;
+    font-size: px2rem(20);
+    padding: px2rem(20) px2rem(32);
+
+    &:hover:not([disabled]) {
+      background: alpha($everyDollarOrange, 0.8);
     }
   }
 }
