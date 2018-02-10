@@ -3,9 +3,25 @@ import merge from 'lodash-es/merge'
 
 export const STORAGE_KEY = 'snowball-state'
 
+export interface MinimumPaymentConfig {
+  percentage: number
+  minimum: number
+}
+
+export interface AccountConfig {
+  accountId: string
+  rate: number
+  minimumPayment: MinimumPaymentConfig
+}
+
+export interface BudgetConfig {
+  budgetId: string
+  accounts: AccountConfig[]
+}
+
 export interface Settings {
   apiAccessToken: string
-  debtAccounts: { [key: string]: string }
+  budgets: BudgetConfig[]
 }
 
 export interface State {

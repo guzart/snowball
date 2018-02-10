@@ -1,18 +1,22 @@
 <template>
-  <div class="home">
-    <img src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div>
+    <DebtSnowball v-if="isSetup" />
+    <SetupWizard v-else />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import HelloWorld from '@/components/HelloWorld.vue'
+import { mapGetters } from 'vuex'
+import DebtSnowball from '@/components/DebtSnowball.vue'
+import SetupWizard from '@/components/SetupWizard.vue'
 
 export default Vue.extend({
   name: 'home',
   components: {
-    HelloWorld
-  }
+    DebtSnowball,
+    SetupWizard
+  },
+  computed: mapGetters(['isSetup'])
 })
 </script>

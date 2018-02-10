@@ -1,14 +1,16 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import plugins from './plugins'
+
+import getters from './getters'
 import mutations, { State, STORAGE_KEY } from './mutations'
+import plugins from './plugins'
 
 Vue.use(Vuex)
 
 const defaultState: State = {
   settings: {
     apiAccessToken: '',
-    debtAccounts: {}
+    budgets: []
   }
 }
 
@@ -22,8 +24,8 @@ const state = ((): State => {
 
 const store = new Vuex.Store<State>({
   state,
+  getters,
   mutations,
-  actions: {},
   plugins
 })
 
