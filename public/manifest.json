@@ -1,6 +1,6 @@
 {
-  "name": "snowball",
-  "short_name": "snowball",
+  "name": "Debt Snowball for YNAB",
+  "short_name": "Debt Snowball",
   "icons": [
     {
       "src": "/img/icons/android-chrome-192x192.png",
