@@ -1,5 +1,6 @@
-import { Store as vStore } from 'vuex'
+import { MutationTree, Store as vStore } from 'vuex'
 import merge from 'lodash-es/merge'
+import { BudgetSummary } from '@/helpers/ynab'
 
 export const STORAGE_KEY = 'snowball-state'
 
@@ -25,13 +26,19 @@ export interface Settings {
 }
 
 export interface State {
+  budgets: BudgetSummary[]
   settings: Settings
 }
 
 export type Store = vStore<State>
 
-export default {
-  saveSettings(state: State, settings: Partial<Settings>) {
+const mutations: MutationTree<State> = {
+  setBudgets(state, budgets: BudgetSummary[]) {
+    state.budgets = budgets
+  },
+  saveSettings(state, settings: Partial<Settings>) {
     state.settings = merge({}, state.settings, settings)
   }
 }
+
+export default mutations

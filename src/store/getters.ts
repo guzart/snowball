@@ -1,12 +1,15 @@
 import { GetterTree } from 'vuex'
 import { State } from '@/store'
+import { clientFactory } from '@/helpers/ynab'
 
 const getters: GetterTree<State, State> = {
-  budgetIds: state => {
-    return state.settings.budgets.map(b => b.budgetId)
+  isSetup: state => {
+    return state.settings.budgets.map(b => b.budgetId).length > 0
   },
-  isSetup: (_, getters) => {
-    return getters.budgetIds.length > 0
+  ynabClient: state => {
+    const accessToken = state.settings.apiAccessToken
+    console.log(accessToken)
+    return clientFactory(accessToken)
   }
 }
 
