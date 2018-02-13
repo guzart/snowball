@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve --open",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build",
+    "deploy": "yarn build && firebase deploy --only hosting",
+    "deploy:all": "yarn build && firebase deploy"
   },
   "dependencies": {
     "@fortawesome/fontawesome": "^1.1.3",
