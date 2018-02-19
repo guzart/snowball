@@ -61,19 +61,17 @@ export default Vue.extend({
   text-align: left;
 
   label {
-    // width: 100%;
     font-size: px2rem(14);
-    font-weight: bold;
+    font-weight: 900;
     line-height: px2rem(21);
   }
 
   input {
-    // width: 100%;
     color: $midnightBlueDark;
     border: 1px solid $gray;
     border-radius: $borderRadius;
-    padding: px2rem(8);
     font-size: px2rem(16);
+    padding: px2rem(8);
 
     &:hover {
       border-color: $bahamaBlue;

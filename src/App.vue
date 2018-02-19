@@ -8,13 +8,15 @@
   </div>
 </template>
 
-<style>
+<style lang="stylus">
+@import url('http://fonts.googleapis.com/css?family=Lato');
+@import './styles/_variables';
+@import './styles/_typography';
+
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  text-align: center;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
 }
 
 #nav {
