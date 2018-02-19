@@ -89,6 +89,101 @@ $fontSize = 14px;
 
 $borderRadius = 4px;
 
+$spacing = px2rem(4), px2rem(8), px2rem(12), px2rem(16), px2rem(20), px2rem(32), px2rem(40)
+
+spacing(index) {
+  $spacing[index];
+}
+
 px2rem(px) {
   (px / $fontSize)rem;
+}
+
+$grid-columns = 12;
+
+$grid-gutter-width = 30px;
+
+$gridBreakpoints = {
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px
+};
+
+$containerMaxWidths = {
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px
+};
+
+.container {
+  makeContainer();
+  makeContainerMaxWidths();
+}
+
+makeContainer() {
+  // padding-right: ($grid-gutter-width / 2);
+  // padding-left: ($grid-gutter-width / 2);
+  margin-right: auto;
+  margin-left: auto;
+  width: 100%;
+}
+
+makeContainerMaxWidths() {
+  for breakpoint, containerMaxWidth in $gridBreakpoints {
+    +mediaBreakpointUp(breakpoint) {
+      max-width: containerMaxWidth;
+    }
+  }
+}
+
+mediaBreakpointUp(name) {
+  min = breakpointMin(name);
+  if min {
+    @media (min-width: min) {
+      {block};
+    }
+  } else {
+    {block};
+  }
+}
+
+mediaBreakpointDown(name) {
+  max = breakpointMax(name);
+  if max {
+    @media (max-width: max) {
+      {block};
+    }
+  } else {
+    {block};
+  }
+}
+
+breakpointMin(name) {
+  min = $gridBreakpoints[name]
+  if min != 0 {
+    min
+  } else {
+    null
+  }
+}
+
+breakpointMax(name) {
+  next = breakpointNext(name);
+  if next {
+    breakpointMin(next) - 1px;
+  } else {
+    null;
+  }
+}
+
+breakpointNext(name, breakpointNames = keys($gridBreakpoints)) {
+  n = index(breakpointNames, name);
+  if n < length(gridBreakpoints) {
+    nth(gridBreakpoints, n + 1)
+   } else {
+     null
+   }
 }

@@ -1,6 +1,7 @@
 <template>
   <button
     v-bind:class="classObject"
+    v-bind:disabled="isDisabled"
   ><slot /></button>
 </template>
 
@@ -55,6 +56,10 @@ export default Vue.extend({
   padding: px2rem(9) px2rem(16);
   position: relative;
   cursor: pointer;
+
+  &[disabled] {
+    cursor: default;
+  }
 
   &:not([disabled]):active {
     top: 2px;

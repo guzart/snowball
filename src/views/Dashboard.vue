@@ -1,18 +1,18 @@
 <template>
   <div>
-    <DebtSnowball />
+    <WizardAccessToken />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 // import { mapGetters } from 'vuex'
-import DebtSnowball from '@/components/DebtSnowball.vue'
+import WizardAccessToken from '@/components/wizard/AccessToken.vue'
 
 export default Vue.extend({
   name: 'home',
   components: {
-    DebtSnowball
+    WizardAccessToken
   }
   // computed: mapGetters(['isSetup'])
 })

@@ -23,7 +23,7 @@ export default Vue.extend({
   created() {
     const store = this.$store
     const state: State = store.state
-    if (state.budgets.length === 0) {
+    if (state.userBudgets.length === 0) {
       this.loading = true
       store
         .dispatch('loadBudgets')
@@ -36,10 +36,9 @@ export default Vue.extend({
     }
   },
   computed: {
-    budgets() {},
     hasBudgets() {
       const state: State = this.$store.state
-      return state.budgets.length > 0
+      return state.userBudgets.length > 0
     }
   },
   components: {

@@ -14,6 +14,7 @@
 @import './styles/_typography';
 
 #app {
+  @extend .container;
   text-align: center;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
