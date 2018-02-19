@@ -9,35 +9,35 @@ export interface MinimumPaymentConfig {
   minimum: number
 }
 
-export interface AccountConfig {
+export interface AccountSettings {
   accountId: string
   rate: number
   minimumPayment: MinimumPaymentConfig
 }
 
-export interface BudgetConfig {
+export interface BudgetSettings {
   budgetId: string
-  accounts: AccountConfig[]
+  accounts: AccountSettings[]
 }
 
 export interface Settings {
   apiAccessToken: string
-  budgets: BudgetConfig[]
+  budgets: BudgetSettings[]
 }
 
 export interface State {
-  budgets: BudgetSummary[]
   settings: Settings
+  userBudgets: BudgetSummary[]
 }
 
 export type Store = vStore<State>
 
 const mutations: MutationTree<State> = {
-  setBudgets(state, budgets: BudgetSummary[]) {
-    state.budgets = budgets
-  },
   saveSettings(state, settings: Partial<Settings>) {
     state.settings = merge({}, state.settings, settings)
+  },
+  setUserBudgets(state, budgets: BudgetSummary[]) {
+    state.userBudgets = budgets
   }
 }
 

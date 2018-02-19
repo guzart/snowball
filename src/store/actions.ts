@@ -3,12 +3,11 @@ import { State } from '@/store'
 import { YNABClient } from '@/helpers/ynab'
 
 const actions: ActionTree<State, State> = {
-  loadBudgets: ctx => {
-    const client: YNABClient = ctx.getters.ynabClient
-    return client.fetchBudgets().then(budgets => {
-      ctx.commit('setBudgets', budgets)
-      return budgets
-    })
+  loadBudgets: async ctx => {
+    const client: YNABClient = ctx.getters.client
+    const budgets = await client.fetchBudgets()
+    ctx.commit('setUserBudgets', budgets)
+    return budgets
   }
 }
 

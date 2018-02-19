@@ -150,11 +150,9 @@ const getRequest = <T>(accessToken: string) => (
   options: RequestInit = {}
 ) =>
   fetch(
-    `https://api.youneedabudget.com/v1${path}`,
+    `http://localhost:9090/papi/v1${path}`,
     merge(
       {
-        // mode: 'no-cors',
-        // credentials: 'include',
         headers: {
           Accept: 'application/json',
           Authorization: `Bearer ${accessToken}`
@@ -171,7 +169,7 @@ export const fetchBudgets = (accessToken: string) => async () => {
   return response.data.budgets
 }
 
-type BudgetResponse = Response<{ budget: Budget }>
+type BudgetResponse = Response<{ budget: Budget; server_knowledge: number }>
 
 export const fetchBudget = (accessToken: string) => async (
   budgetId: string
@@ -187,5 +185,5 @@ export const clientFactory = (accessToken: string) => ({
   fetchBudgets: fetchBudgets(accessToken)
 })
 
-const client = clientFactory('')
+const client = clientFactory('') // use to get the type
 export type YNABClient = typeof client

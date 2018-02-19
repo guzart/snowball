@@ -10,7 +10,7 @@ import plugins from './plugins'
 Vue.use(Vuex)
 
 const defaultState: State = {
-  budgets: [],
+  userBudgets: [],
   settings: {
     apiAccessToken: '',
     budgets: []
@@ -27,8 +27,6 @@ const state = ((): State => {
     return defaultState
   }
 })()
-
-console.log(state)
 
 const store = new Vuex.Store<State>({
   state,
