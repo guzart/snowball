@@ -59,6 +59,8 @@ export default Vue.extend({
 
   &[disabled] {
     cursor: default;
+    filter: grayscale(80%);
+    opacity: 0.6;
   }
 
   &:not([disabled]):active {

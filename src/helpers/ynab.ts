@@ -141,8 +141,33 @@ export interface Budget extends BudgetSummary {
   scheduled_subtransactions?: ScheduledSubTransaction[]
 }
 
-interface Response<T> {
+interface APIErrorResponseBody {
+  error: {
+    id: string
+    name: string
+    detail: string
+  }
+}
+
+interface APIResponseDataBody<T> extends Response {
   data: T
+}
+
+type APIResponseBody<T> = APIResponseDataBody<T> | APIErrorResponseBody
+
+const isAPIResponseError = <T>(
+  response: APIResponseBody<T>
+): response is APIErrorResponseBody => {
+  return (<APIErrorResponseBody>response).error !== undefined
+}
+
+export class HttpError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+  }
 }
 
 const getRequest = <T>(accessToken: string) => (
@@ -160,16 +185,29 @@ const getRequest = <T>(accessToken: string) => (
       },
       options
     )
-  ).then(response => response.json() as Promise<T>)
+  )
+    .then(r => r.json())
+    .then((r: APIResponseDataBody<T>) => {
+      if (isAPIResponseError(r)) {
+        throw new HttpError(r.error.detail, parseInt(r.error.id, 10))
+      }
 
-type BudgetsResponse = Response<{ budgets: BudgetSummary[] }>
+      return r
+    })
+
+interface BudgetsResponse {
+  budgets: BudgetSummary[]
+}
 
 export const fetchBudgets = (accessToken: string) => async () => {
   const response = await getRequest<BudgetsResponse>(accessToken)('/budgets')
   return response.data.budgets
 }
 
-type BudgetResponse = Response<{ budget: Budget; server_knowledge: number }>
+interface BudgetResponse {
+  budget: Budget
+  server_knowledge: number
+}
 
 export const fetchBudget = (accessToken: string) => async (
   budgetId: string

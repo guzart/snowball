@@ -1,5 +1,5 @@
 <template>
-<div class="form-input">
+<div v-bind:class="classObject">
   <label v-bind:for="id">{{label}}</label>
   <input
     ref="input"
@@ -38,8 +38,13 @@ export default Vue.extend({
     },
     value: [String, Number]
   },
-  components: {
-    SimpleIcon
+  computed: {
+    classObject(): any {
+      return {
+        'form-input': true,
+        'has-error': this.errorMessage !== ''
+      }
+    }
   },
   methods: {
     updateValue(value: string) {
@@ -47,6 +52,9 @@ export default Vue.extend({
       input.value = value
       this.$emit('input', value)
     }
+  },
+  components: {
+    SimpleIcon
   }
 })
 </script>
@@ -105,13 +113,9 @@ export default Vue.extend({
     }
   }
 
-  &.mod-error {
+  &.has-error {
     input {
       border-color: $negativeRed;
-    }
-
-    .ynab-new-icon {
-      fill: $negativeRed;
     }
 
     .mod-message {

@@ -6,8 +6,12 @@ const actions: ActionTree<State, State> = {
   loadBudgets: async ctx => {
     const client: YNABClient = ctx.getters.client
     const budgets = await client.fetchBudgets()
-    ctx.commit('setUserBudgets', budgets)
+    ctx.commit('saveUserBudgets', budgets)
     return budgets
+  },
+  setupAccessToken: async ({ commit, dispatch }, accessToken: string) => {
+    commit('saveAccessToken', accessToken)
+    await dispatch('loadBudgets')
   }
 }
 

@@ -12,7 +12,7 @@ Vue.use(Vuex)
 const defaultState: State = {
   userBudgets: [],
   settings: {
-    apiAccessToken: '',
+    accessToken: '',
     budgets: []
   }
 }

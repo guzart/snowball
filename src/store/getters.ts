@@ -4,7 +4,7 @@ import { clientFactory } from '@/helpers/ynab'
 
 const getters: GetterTree<State, State> = {
   client: state => {
-    const accessToken = state.settings.apiAccessToken
+    const accessToken = state.settings.accessToken
     return clientFactory(accessToken)
   }
 }

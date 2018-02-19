@@ -21,7 +21,7 @@ export interface BudgetSettings {
 }
 
 export interface Settings {
-  apiAccessToken: string
+  accessToken: string
   budgets: BudgetSettings[]
 }
 
@@ -33,10 +33,13 @@ export interface State {
 export type Store = vStore<State>
 
 const mutations: MutationTree<State> = {
+  saveAccessToken(state, accessToken: string) {
+    state.settings.accessToken = accessToken
+  },
   saveSettings(state, settings: Partial<Settings>) {
     state.settings = merge({}, state.settings, settings)
   },
-  setUserBudgets(state, budgets: BudgetSummary[]) {
+  saveUserBudgets(state, budgets: BudgetSummary[]) {
     state.userBudgets = budgets
   }
 }

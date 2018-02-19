@@ -5,7 +5,7 @@
       <ul>
         <li is="FormInput" id="setting-api-access-token"
           label="API Access Token"
-          v-model="settingsScratchPad.apiAccessToken"
+          v-model="settingsScratchPad.accessToken"
         />
       </ul>
       <SimpleButton type="button">Discard</SimpleButton>

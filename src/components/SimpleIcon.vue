@@ -1,5 +1,9 @@
 <template>
-  <span class="simple-icon" />
+  <svg class="simple-icon" aria-hidden="true" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <g transform="translate(512,512) scale(1,-1) translate(-512,-512)">
+    <path fill="currentColor" v-bind:d="iconPath" />
+  </g>
+  </svg>
 </template>
 
 <script lang="ts">
@@ -112,7 +116,7 @@ export default Vue.extend({
     name: String
   },
   computed: {
-    icon(): string {
+    iconPath(): string {
       return TYPES[this.name]
     }
   }
@@ -123,10 +127,12 @@ export default Vue.extend({
 @import '../styles/_variables';
 
 .simple-icon {
-  fill: $white;
-  position: relative;
-  width: 1rem;
+  display: inline-block;
+  font-size: inherit;
   height: 1rem;
+  overflow: visible;
+  vertical-align: -.125em;
+  width: 1rem;
 
   &.mod-primary {
     fill: $bahamaBlue;
