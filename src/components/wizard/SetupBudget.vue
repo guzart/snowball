@@ -5,7 +5,22 @@
       Choose the budget you want to work with
     </p>
     <form v-on:submit.prevent="onSubmit">
-      <span>{{userBudgets}}</span>
+      <ListGroup>
+        <ListGroupItem
+          v-for="budget in userBudgets"
+          v-bind:key="budget.id"
+          v-bind:active="budget.id === selectedBudgetId"
+          v-on:click="selectedBudgetId = budget.id"
+        >
+          <div>
+            <h5>{{budget.name}}</h5>
+            <small>{{formatLastModified(budget.last_modified_on)}}</small>
+          </div>
+          <p>
+            Budgeted months: {{formatMonth(budget.first_month)}} &ndash; {{formatMonth(budget.last_month)}}
+          </p>
+        </ListGroupItem>
+      </ListGroup>
       <ActionBar
         v-bind:disableBack="false"
         v-bind:disableNext="!hasSelectedBudget"
@@ -17,11 +32,14 @@
 </template>
 
 <script lang="ts">
+import * as moment from 'moment'
 import Vue from 'vue'
-import ActionBar from '@/components/wizard/ActionBar.vue'
-import { State, WizardStep } from '@/store/mutations'
 import { mapState } from 'vuex'
+import ListGroup from '@/components/ListGroup.vue'
+import ListGroupItem from '@/components/ListGroupItem.vue'
+import ActionBar from '@/components/wizard/ActionBar.vue'
 import { HttpError } from '@/helpers/ynab'
+import { State, WizardStep } from '@/store/mutations'
 
 export default Vue.extend({
   name: 'WizardSetupBudget',
@@ -43,6 +61,14 @@ export default Vue.extend({
     ...mapState(['userBudgets'])
   },
   methods: {
+    formatLastModified(lastModifiedOn: string) {
+      return moment(lastModifiedOn, moment.ISO_8601).format(
+        'dddd, MMMM Do YYYY, h:mm:ss a'
+      )
+    },
+    formatMonth(month: string) {
+      return moment(month, 'Y-MM-DD').format('MMMM Y')
+    },
     onBack() {
       const prevStep: WizardStep = 'accessToken'
       this.$store.commit('saveWizardStep', prevStep)
@@ -63,18 +89,12 @@ export default Vue.extend({
     }
   },
   components: {
-    ActionBar
+    ActionBar,
+    ListGroup,
+    ListGroupItem
   }
 })
 </script>
 
-
-<style lang="stylus" scoped>
-@import '~@/styles/_variables';
-
-.actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: spacing(4);
-}
+<style lang="stylus">
 </style>

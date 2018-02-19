@@ -6,21 +6,18 @@
     </p>
     <span>{{budgetAccounts}}</span>
     <form v-on:submit.prevent="onSubmit">
-      <div class="actions">
-        <y-simple-button type="button">Back</y-simple-button>
-        <y-loader-button
-          theme="primary"
-          v-bind:disabled="!hasSelectedBudget"
-        >Next</y-loader-button>
-      </div>
+      <ActionBar
+        v-bind:disableNext="!hasSelectedBudget"
+      />
     </form>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import { State } from '@/store/mutations'
 import { mapState } from 'vuex'
+import { State } from '@/store/mutations'
+import ActionBar from './ActionBar.vue'
 
 export default Vue.extend({
   name: 'WizardSetupBudget',
@@ -44,17 +41,9 @@ export default Vue.extend({
       const { selectedBudgetId } = this
       this.$store.commit('saveBudgetSettings', selectedBudgetId)
     }
+  },
+  components: {
+    ActionBar
   }
 })
 </script>
-
-
-<style lang="stylus" scoped>
-@import '~@/styles/_variables';
-
-.actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: spacing(4);
-}
-</style>

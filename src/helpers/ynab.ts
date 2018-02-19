@@ -1,23 +1,26 @@
 import merge from 'lodash-es/merge'
 
 export interface CurrencyFormat {
-  locale: string
+  currency_symbol: string
+  decimal_digits: number
+  decimal_separator: string
+  display_symbol: boolean
+  example_format: string
+  group_separator: string
+  iso_code: string
+  symbol_first: boolean
 }
 
 export interface DateFormat {
-  locale: string
+  format: string
 }
 
 export interface BudgetSummary {
   id: string
   name: string
   last_modified_on?: string
-  date_format?: {
-    locale: string
-  }
-  currency_format?: {
-    locale: string
-  }
+  date_format?: DateFormat
+  currency_format?: CurrencyFormat
 }
 
 export interface CategoryGroup {
