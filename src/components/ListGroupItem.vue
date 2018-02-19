@@ -1,5 +1,8 @@
 <template>
-  <a v-bind:class="classObject" v-on:click.prevent="onClick" href="#" role="button">
+  <a v-bind:class="classObject"
+    v-on:click.prevent="onClick" v-on:keydown.down="onNext" v-on:keydown.up="onPrevious"
+    href="#" role="button"
+  >
     <slot />
   </a>
 </template>
@@ -27,6 +30,12 @@ export default Vue.extend({
   methods: {
     onClick() {
       this.$emit('click')
+    },
+    onNext() {
+      this.$emit('next')
+    },
+    onPrevious() {
+      this.$emit('previous')
     }
   }
 })
@@ -48,6 +57,7 @@ export default Vue.extend({
 
   &.active {
     border-color: $bahamaBlue;
+    border-radius: $borderRadius;
     z-index: 2;
     shadow(8);
   }

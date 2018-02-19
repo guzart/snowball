@@ -52,7 +52,7 @@ export default Vue.extend({
 </script>
 
 <style lang="stylus">
-@import '../styles/_variables';
+@import '~@/styles/_variables';
 
 .btn {
   border: solid 1px $gray;

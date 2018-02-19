@@ -1,19 +1,21 @@
 <template>
-  <div>
+  <div class="wizardSetupBudget">
     <h1>Choose a budget</h1>
     <p>
       Choose the budget you want to work with
     </p>
     <form v-on:submit.prevent="onSubmit">
-      <ListGroup>
+      <ListGroup class="budgetsList">
         <ListGroupItem
           v-for="budget in userBudgets"
           v-bind:key="budget.id"
           v-bind:active="budget.id === selectedBudgetId"
           v-on:click="selectedBudgetId = budget.id"
+          v-on:next="selectNext()"
+          v-on:previous="selectPrevious()"
         >
-          <div>
-            <h5>{{budget.name}}</h5>
+          <div class="heading">
+            <h5 class="title">{{budget.name}}</h5>
             <small>{{formatLastModified(budget.last_modified_on)}}</small>
           </div>
           <p>
@@ -32,9 +34,11 @@
 </template>
 
 <script lang="ts">
+import findIndex from 'lodash-es/findIndex'
 import * as moment from 'moment'
 import Vue from 'vue'
 import { mapState } from 'vuex'
+
 import ListGroup from '@/components/ListGroup.vue'
 import ListGroupItem from '@/components/ListGroupItem.vue'
 import ActionBar from '@/components/wizard/ActionBar.vue'
@@ -86,6 +90,24 @@ export default Vue.extend({
           this.isBusy = false
           this.errorMessage = error.message
         })
+    },
+    selectPrevious() {
+      const { selectedBudgetId } = this
+      const { userBudgets } = <State>this.$store.state
+      const index = findIndex(userBudgets, b => b.id == selectedBudgetId)
+      const previousBudget = userBudgets[index - 1]
+      if (previousBudget) {
+        this.selectedBudgetId = previousBudget.id
+      }
+    },
+    selectNext() {
+      const { selectedBudgetId } = this
+      const { userBudgets } = <State>this.$store.state
+      const index = findIndex(userBudgets, b => b.id == selectedBudgetId)
+      const nextBudget = userBudgets[index + 1]
+      if (nextBudget) {
+        this.selectedBudgetId = nextBudget.id
+      }
     }
   },
   components: {
@@ -97,4 +119,22 @@ export default Vue.extend({
 </script>
 
 <style lang="stylus">
+@import '~@/styles/_variables';
+
+.wizardSetupBudget {
+  .budgetsList {
+    text-align: left;
+  }
+
+  .heading {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+
+    .title {
+      font-size: px2rem(18);
+      margin: 0;
+    }
+  }
+}
 </style>

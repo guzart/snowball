@@ -124,7 +124,7 @@ export default Vue.extend({
 </script>
 
 <style lang="stylus">
-@import '../styles/_variables';
+@import '~@/styles/_variables';
 
 .simple-icon {
   display: inline-block;
