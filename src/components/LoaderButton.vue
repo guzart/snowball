@@ -1,6 +1,6 @@
 <script lang="ts">
 import { create } from 'ladda'
-import SimpleButtonVue from '@/components/SimpleButton.vue'
+import SimpleButton from '@/components/SimpleButton.vue'
 
 interface ILaddaButton {
   start(): ILaddaButton
@@ -18,7 +18,7 @@ interface Data {
   ladda: ILaddaButton | null
 }
 
-export default SimpleButtonVue.extend({
+export default SimpleButton.extend({
   name: 'LoaderButton',
   data() {
     return {

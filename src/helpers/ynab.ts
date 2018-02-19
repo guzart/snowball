@@ -141,6 +141,18 @@ export interface Budget extends BudgetSummary {
   scheduled_subtransactions?: ScheduledSubTransaction[]
 }
 
+interface Account {
+  id: string
+  name: string
+  type: 'Checking' | 'Savings' | 'CreditCard'
+  on_budget: boolean
+  closed: boolean
+  note: string | null
+  balance: number
+  cleared_balance: number
+  uncleared_balance: number
+}
+
 interface APIErrorResponseBody {
   error: {
     id: string
@@ -213,12 +225,26 @@ export const fetchBudget = (accessToken: string) => async (
   budgetId: string
 ) => {
   const response = await getRequest<BudgetResponse>(accessToken)(
-    `/budget/${budgetId}`
+    `/budgets/${budgetId}/accounts`
   )
   return response.data.budget
 }
 
+interface AccountsResponse {
+  accounts: Account[]
+}
+
+export const fetchAccounts = (accessToken: string) => async (
+  budgetId: string
+) => {
+  const response = await getRequest<AccountsResponse>(accessToken)(
+    `/budgets/${budgetId}/accounts`
+  )
+  return response.data.accounts
+}
+
 export const clientFactory = (accessToken: string) => ({
+  fetchAccounts: fetchAccounts(accessToken),
   fetchBudget: fetchBudget(accessToken),
   fetchBudgets: fetchBudgets(accessToken)
 })

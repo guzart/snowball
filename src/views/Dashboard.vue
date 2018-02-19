@@ -1,19 +1,17 @@
 <template>
   <div>
-    <WizardAccessToken />
+    <SetupWizard />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-// import { mapGetters } from 'vuex'
-import WizardAccessToken from '@/components/wizard/AccessToken.vue'
+import SetupWizard from '@/components/SetupWizard.vue'
 
 export default Vue.extend({
   name: 'home',
   components: {
-    WizardAccessToken
+    SetupWizard
   }
-  // computed: mapGetters(['isSetup'])
 })
 </script>

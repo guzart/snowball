@@ -8,8 +8,8 @@
           v-model="settingsScratchPad.accessToken"
         />
       </ul>
-      <SimpleButton type="button">Discard</SimpleButton>
-      <SimpleButton theme="primary">Save Changes</SimpleButton>
+      <y-simple-button type="button">Discard</y-simple-button>
+      <y-simple-button theme="primary">Save Changes</y-simple-button>
     </form>
   </div>
 </template>
@@ -18,8 +18,6 @@
 import Vue from 'vue'
 import { mapState } from 'vuex'
 import FormInput from '@/components/FormInput.vue'
-import LoaderButton from '@/components/LoaderButton.vue'
-import SimpleButton from '@/components/SimpleButton.vue'
 import { State } from '@/store'
 
 export default Vue.extend({
@@ -38,9 +36,7 @@ export default Vue.extend({
     }
   },
   components: {
-    FormInput,
-    LoaderButton,
-    SimpleButton
+    FormInput
   }
 })
 </script>

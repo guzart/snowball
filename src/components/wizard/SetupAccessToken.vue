@@ -11,15 +11,11 @@
         v-model="accessToken"
         v-bind:errorMessage="errorMessage"
       />
-      <div class="actions">
-        <SimpleButton type="button" disabled>Back</SimpleButton>
-        <LoaderButton
-          theme="primary"
-          class="next-button"
-          v-bind:disabled="!hasAccessToken"
-          v-bind:loading="isBusy"
-        >Next</LoaderButton>
-      </div>
+      <ActionBar
+        v-bind:disableBack="true"
+        v-bind:disableNext="!hasAccessToken"
+        v-bind:isNextBusy="isBusy"
+      />
     </form>
   </div>
 </template>
@@ -27,13 +23,13 @@
 <script lang="ts">
 import Vue from 'vue'
 import FormInput from '@/components/FormInput.vue'
-import LoaderButton from '@/components/LoaderButton.vue'
-import SimpleButton from '@/components/SimpleButton.vue'
-import { State } from '@/store/mutations'
 import { HttpError } from '@/helpers/ynab'
+import { State } from '@/store/mutations'
+
+import ActionBar from './ActionBar.vue'
 
 export default Vue.extend({
-  name: 'WizardAccessToken',
+  name: 'WizardSetupAccessToken',
   data() {
     const state: State = this.$store.state
     return {
@@ -67,9 +63,8 @@ export default Vue.extend({
     }
   },
   components: {
-    FormInput,
-    LoaderButton,
-    SimpleButton
+    ActionBar,
+    FormInput
   }
 })
 </script>

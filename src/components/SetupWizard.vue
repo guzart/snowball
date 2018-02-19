@@ -1,48 +1,28 @@
 <template>
   <div>
-    <div>
-      <h1>Choose your Budget</h1>
-      {{ budgets }}
-      <LoaderMessage v-if="loading">Loading available budgets...</LoaderMessage>
-    </div>
+    <SetupAccessToken v-if="wizardStep === 'accessToken'" />
+    <SetupBudget v-else-if="wizardStep === 'budget'" />
+    <SetupAccounts v-else-if="wizardStep === 'accounts'" />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import LoaderMessage from '@/components/LoaderMessage.vue'
-import { State } from '@/store/mutations'
+import SetupAccessToken from '@/components/wizard/SetupAccessToken.vue'
+import SetupAccounts from '@/components/wizard/SetupAccounts.vue'
+import SetupBudget from '@/components/wizard/SetupBudget.vue'
+// import { State } from '@/store/mutations'
+import { mapState } from 'vuex'
 
 export default Vue.extend({
   name: 'SetupWizard',
-  data() {
-    return {
-      loading: false
-    }
-  },
-  created() {
-    const store = this.$store
-    const state: State = store.state
-    if (state.userBudgets.length === 0) {
-      this.loading = true
-      store
-        .dispatch('loadBudgets')
-        .then(() => {
-          this.loading = false
-        })
-        .catch(() => {
-          this.loading = false
-        })
-    }
-  },
   computed: {
-    hasBudgets() {
-      const state: State = this.$store.state
-      return state.userBudgets.length > 0
-    }
+    ...mapState(['wizardStep'])
   },
   components: {
-    LoaderMessage
+    SetupAccessToken,
+    SetupAccounts,
+    SetupBudget
   }
 })
 </script>

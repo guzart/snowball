@@ -2,6 +2,7 @@
   <button
     v-bind:class="classObject"
     v-bind:disabled="isDisabled"
+    v-on:click="onClick"
   ><slot /></button>
 </template>
 
@@ -30,7 +31,7 @@ export default Vue.extend({
     }
   },
   computed: {
-    classObject(): any {
+    classObject(): Object {
       const { size, theme } = this
       const classes = ['btn', `btn-${theme}`]
       if (this.size != '') {
@@ -40,6 +41,11 @@ export default Vue.extend({
     },
     isDisabled(): boolean {
       return this.disabled || this.internalDisabled
+    }
+  },
+  methods: {
+    onClick() {
+      this.$emit('click')
     }
   }
 })
