@@ -91,14 +91,6 @@ $borderRadius = 4px;
 
 $spacing = px2rem(4), px2rem(8), px2rem(12), px2rem(16), px2rem(20), px2rem(32), px2rem(40)
 
-spacing(index) {
-  $spacing[index];
-}
-
-px2rem(px) {
-  (px / $fontSize)rem;
-}
-
 $grid-columns = 12;
 
 $grid-gutter-width = 30px;
@@ -118,9 +110,12 @@ $containerMaxWidths = {
   xl: 1140px
 };
 
-.container {
-  makeContainer();
-  makeContainerMaxWidths();
+spacing(index) {
+  $spacing[index];
+}
+
+px2rem(px) {
+  (px / $fontSize)rem;
 }
 
 makeContainer() {

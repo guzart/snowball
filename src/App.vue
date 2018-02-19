@@ -6,8 +6,30 @@
 
 <style lang="stylus">
 @import url('http://fonts.googleapis.com/css?family=Lato');
-@import './styles/_variables';
-@import './styles/_typography';
+@import '~@/styles/_variables';
+@import '~@/styles/_typography';
+
+body {
+  color: $black;
+  font-family: 'Lato', sans-serif;
+  font-size: px2rem(14);
+  line-height: 1.5;
+}
+
+h1 {
+  display();
+  font-weight: bold;
+}
+
+h2 {
+  headline();
+  font-weight: bold;
+}
+
+.container {
+  makeContainer();
+  makeContainerMaxWidths();
+}
 
 #app {
   @extend .container;
