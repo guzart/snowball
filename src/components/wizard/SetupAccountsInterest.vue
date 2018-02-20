@@ -16,7 +16,7 @@
             <h5 class="SimpleCard_Title">{{account.account.name}}</h5>
             <h6 class="SimpleCard_Subtitle">{{account.account.type}}</h6>
             <p>
-              <FormInput v-bind:mode="account.settings.rate" label="Rate" />
+              <FormInput v-bind:mode="account.settings.rate" label="Interest Rate" />
               <FormInput v-bind:mode="account.settings.minPaymentPercent" label="Min. Payment Percentage" />
               <FormInput v-bind:mode="account.settings.minPaymentAmount" label="Min. Payment Amount" />
             </p>

@@ -1,5 +1,10 @@
 # Debt Snowball
 
+## TODO
+
+* Don't reset selected accounts if selected budget didn't change
+* Show settings button after first initial setup
+
 ## Resources
 
 * https://vuex.vuejs.org/en/getters.html
