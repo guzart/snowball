@@ -5,22 +5,24 @@
       To calculate your debt snowball we need each of your accounts
       interest details
     </p>
-    <form v-on:submit.prevent="onSubmit">
-      <ListGroup>
-        <ListGroupItem
+    <form v-on:submit.prevent="onSubmit" class="form">
+      <SimpleCardDeck>
+        <SimpleCard
           v-for="account in accounts"
           v-bind:key="account.id"
           v-bind:selectable="false"
         >
-          <div class="Heading">
-            <h5 class="Title">{{account.account.name}}</h5>
-            <small>{{account.account.type}}</small>
+          <div class="SimpleCard_Body">
+            <h5 class="SimpleCard_Title">{{account.account.name}}</h5>
+            <h6 class="SimpleCard_Subtitle">{{account.account.type}}</h6>
+            <p>
+              <FormInput v-bind:mode="account.settings.rate" label="Rate" />
+              <FormInput v-bind:mode="account.settings.minPaymentPercent" label="Min. Payment Percentage" />
+              <FormInput v-bind:mode="account.settings.minPaymentAmount" label="Min. Payment Amount" />
+            </p>
           </div>
-          <FormInput v-bind:mode="account.settings.rate" label="Rate" />
-          <FormInput v-bind:mode="account.settings.minPaymentPercent" label="Min. Payment Percentage" />
-          <FormInput v-bind:mode="account.settings.minPaymentAmount" label="Min. Payment Amount" />
-        </ListGroupItem>
-      </ListGroup>
+        </SimpleCard>
+      </SimpleCardDeck>
       <ActionBar
         v-bind:disableNext="!isValid"
         v-on:back="onBack"
@@ -36,8 +38,8 @@ import { State, WizardStep } from '@/store/types'
 import { BudgetSettings, AccountSettings } from '@/store'
 import { Account } from '@/helpers/ynab'
 import FormInput from '@/components/FormInput.vue'
-import ListGroup from '@/components/ListGroup.vue'
-import ListGroupItem from '@/components/ListGroupItem.vue'
+import SimpleCard from '@/components/SimpleCard.vue'
+import SimpleCardDeck from '@/components/SimpleCardDeck.vue'
 
 interface AccountConfig {
   id: string
@@ -87,24 +89,29 @@ export default Vue.extend({
   components: {
     ActionBar,
     FormInput,
-    ListGroup,
-    ListGroupItem
+    SimpleCard,
+    SimpleCardDeck
   }
 })
 </script>
 
 <style lang="stylus">
 @import '~@/styles/_variables';
+@import '~@/styles/_breakpoints';
 
 .WizardSetupAccountsInterest {
-  .Heading {
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-  }
+  .SimpleCardDeck .SimpleCard {
+    +mediaBreakpointUp(xs) {
+      flex: 0 0 100%;
+    }
 
-  .Title {
-    font-size: px2rem(16);
+    +mediaBreakpointUp(sm) {
+      flex: '0 0 calc(50% - %s)' % $gridGutterWidth;
+    }
+
+    +mediaBreakpointUp(lg) {
+      flex: '0 0 calc(%s - %s)' % (percentage((1 / 3)) $gridGutterWidth);
+    }
   }
 }
 </style>

@@ -55,6 +55,7 @@ export default Vue.extend({
 @import '~@/styles/_variables';
 
 .btn {
+  background-color: $white;
   border: solid 1px $gray;
   border-radius: px2rem(4);
   font-size: px2rem(14);

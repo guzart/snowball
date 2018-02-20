@@ -6,7 +6,8 @@
 
 <style lang="stylus">
 @import url('http://fonts.googleapis.com/css?family=Lato');
-@import '~@/styles/_variables';
+@import '~bootstrap/dist/css/bootstrap-reboot.css';
+@import '~@/styles/_grid';
 @import '~@/styles/_typography';
 
 body {

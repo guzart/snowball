@@ -1,5 +1,5 @@
 <template>
-  <div class="wizard_ActionBar">
+  <div class="Wizard_ActionBar">
     <y-simple-button
       type="button"
       v-bind:disabled="disableBack"
@@ -40,7 +40,7 @@ export default Vue.extend({
 <style lang="stylus">
 @import '~@/styles/_variables';
 
-.wizard_ActionBar {
+.Wizard_ActionBar {
   display: flex;
   justify-content: space-between;
   margin-top: spacing(4);
