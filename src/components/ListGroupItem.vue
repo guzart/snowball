@@ -28,7 +28,7 @@ export default Vue.extend({
     classObject: function(): Object {
       const { active } = this
       return {
-        listGroup_Item: true,
+        ListGroup_Item: true,
         active
       }
     }
@@ -51,7 +51,7 @@ export default Vue.extend({
 @import '~@/styles/_shadows';
 @import '~@/styles/_variables';
 
-.listGroup_Item {
+.ListGroup_Item {
   border: 1px solid alpha($black, 0.25);
   background-color: $white;
   color: $black;
@@ -65,11 +65,17 @@ export default Vue.extend({
     border-color: $bahamaBlue;
     z-index: 2;
     shadow(8);
+
+    &:hover {
+      background-color: $white;
+      z-index: 2;
+    }
   }
 
-  &:hover:not(&.active) {
+  &:hover {
     background-color: $alabasterGray;
     color: $midnightBlueDark;
+    text-decoration: none;
     z-index: 1;
   }
 
