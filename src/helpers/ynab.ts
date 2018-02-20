@@ -1,4 +1,5 @@
 import merge from 'lodash-es/merge'
+import * as numeral from 'numeral'
 
 export interface CurrencyFormat {
   currency_symbol: string
@@ -144,7 +145,7 @@ export interface Budget extends BudgetSummary {
   scheduled_subtransactions?: ScheduledSubTransaction[]
 }
 
-interface Account {
+export interface Account {
   id: string
   name: string
   type: 'Checking' | 'Savings' | 'CreditCard'
@@ -254,3 +255,27 @@ export const clientFactory = (accessToken: string) => ({
 
 const client = clientFactory('') // use to get the type
 export type YNABClient = typeof client
+
+export const formatCurrency = (currencyFormat?: CurrencyFormat) => (
+  value?: string | number
+): string => {
+  if (value == null) {
+    return ''
+  }
+
+  const milliDollarAmount =
+    typeof value === 'string' ? parseInt(value, 10) : value
+  const dollarAmount = milliDollarAmount / 1000.0
+
+  let format = '123,456.78'
+  if (currencyFormat) {
+    format = currencyFormat.example_format
+    if (currencyFormat.display_symbol) {
+      format = currencyFormat.symbol_first
+        ? currencyFormat.currency_symbol + format
+        : format + currencyFormat.currency_symbol
+    }
+  }
+
+  return numeral(dollarAmount.toString()).format(format)
+}

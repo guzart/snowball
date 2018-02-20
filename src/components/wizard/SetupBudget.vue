@@ -1,11 +1,11 @@
 <template>
-  <div class="wizardSetupBudget">
+  <div class="WizardSetupBudget">
     <h1>Choose a budget</h1>
     <p>
       Choose the budget you want to work with
     </p>
     <form v-on:submit.prevent="onSubmit">
-      <ListGroup class="budgetsList">
+      <ListGroup class="BudgetsList">
         <ListGroupItem
           v-for="budget in userBudgets"
           v-bind:key="budget.id"
@@ -14,8 +14,8 @@
           v-on:next="selectNext()"
           v-on:previous="selectPrevious()"
         >
-          <div class="heading">
-            <h5 class="title">{{budget.name}}</h5>
+          <div class="Heading">
+            <h5 class="Title">{{budget.name}}</h5>
             <small>{{formatLastModified(budget.last_modified_on)}}</small>
           </div>
           <p>
@@ -79,12 +79,15 @@ export default Vue.extend({
     },
     onSubmit() {
       const { selectedBudgetId } = this
+      const { commit, dispatch } = this.$store
+      const nextStep: WizardStep = 'accounts'
+
       this.isBusy = true
-      this.$store
-        .dispatch('setupSelectedBudget', selectedBudgetId)
+      dispatch('setupSelectedBudget', selectedBudgetId)
         .then(() => {
           this.isBusy = false
           this.errorMessage = ''
+          commit('saveWizardStep', nextStep)
         })
         .catch((error: HttpError) => {
           this.isBusy = false
@@ -121,17 +124,17 @@ export default Vue.extend({
 <style lang="stylus">
 @import '~@/styles/_variables';
 
-.wizardSetupBudget {
-  .budgetsList {
+.WizardSetupBudget {
+  .BudgetsList {
     text-align: left;
   }
 
-  .heading {
+  .Heading {
     align-items: center;
     display: flex;
     justify-content: space-between;
 
-    .title {
+    .Title {
       font-size: px2rem(18);
       margin: 0;
     }

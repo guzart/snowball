@@ -57,7 +57,6 @@ export default Vue.extend({
 
   &.active {
     border-color: $bahamaBlue;
-    border-radius: $borderRadius;
     z-index: 2;
     shadow(8);
   }

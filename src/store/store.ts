@@ -10,6 +10,7 @@ import plugins from './plugins'
 Vue.use(Vuex)
 
 const defaultState: State = {
+  userAccounts: {},
   userBudgets: [],
   settings: {
     accessToken: '',

@@ -12,11 +12,15 @@ const actions: ActionTree<State, State> = {
   loadBudgetAccounts: async ({ commit, getters }, budgetId: string) => {
     const client: YNABClient = getters.client
     const accounts = await client.fetchAccounts(budgetId)
-    commit('saveBudgetAccounts', accounts)
+    commit('saveUserAccounts', { budgetId, accounts })
   },
   setupAccessToken: async ({ commit, dispatch }, accessToken: string) => {
     commit('saveAccessToken', accessToken)
     await dispatch('loadBudgets')
+  },
+  setupSelectedBudget: async ({ commit, dispatch }, budgetId: string) => {
+    commit('saveBudgetSettings', budgetId)
+    await dispatch('loadBudgetAccounts', budgetId)
   }
 }
 
