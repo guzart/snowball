@@ -1,15 +1,11 @@
 import { Store as vStore } from 'vuex'
 import { Account, BudgetSummary } from '@/helpers/ynab'
 
-export interface MinimumPaymentConfig {
-  percentage: number
-  minimum: number
-}
-
 export interface AccountSettings {
   accountId: string
   rate?: number
-  minimumPayment?: MinimumPaymentConfig
+  minPaymentPercent?: number
+  minPaymentAmount?: number
 }
 
 export interface BudgetSettings {

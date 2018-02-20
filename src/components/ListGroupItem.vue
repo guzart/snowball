@@ -1,10 +1,12 @@
 <template>
-  <a v-bind:class="classObject"
+  <component
+    v-bind:is="selectable ? 'a' : 'div'"
+    v-bind:class="classObject"
     v-on:click.prevent="onClick" v-on:keydown.down="onNext" v-on:keydown.up="onPrevious"
     href="#" role="button"
   >
     <slot />
-  </a>
+  </component>
 </template>
 
 <script lang="ts">
@@ -16,6 +18,10 @@ export default Vue.extend({
     active: {
       type: Boolean,
       default: false
+    },
+    selectable: {
+      type: Boolean,
+      default: true
     }
   },
   computed: {

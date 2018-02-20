@@ -20,6 +20,7 @@
 </template>
 
 <script lang="ts">
+import isEmpty from 'lodash-es/isEmpty'
 import Vue from 'vue'
 import SimpleIcon from '@/components/SimpleIcon.vue'
 
@@ -28,7 +29,10 @@ export default Vue.extend({
   props: {
     disabled: Boolean,
     errorMessage: String,
-    id: String,
+    id: {
+      type: String,
+      default: () => `input-${Math.ceil(Math.random() * 1000)}`
+    },
     label: String,
     placeholder: String,
     successMessage: String,
@@ -42,7 +46,7 @@ export default Vue.extend({
     classObject(): any {
       return {
         'form-input': true,
-        'has-error': this.errorMessage !== ''
+        'has-error': !isEmpty(this.errorMessage)
       }
     }
   },

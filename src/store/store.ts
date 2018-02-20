@@ -39,8 +39,10 @@ const calculateWizardStep = (state: State): WizardStep => {
   }
 
   const isValidConfig = (settings: AccountSettings) =>
-    settings.minimumPayment != null && settings.rate != null
-  if (every(accounts, isValidConfig)) {
+    settings.minPaymentAmount != null &&
+    settings.minPaymentPercent != null &&
+    settings.rate != null
+  if (accounts.length <= 0 || !every(accounts, isValidConfig)) {
     return 'accountsInterest'
   }
 
