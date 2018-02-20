@@ -1,10 +1,13 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import every from 'lodash-es/every'
+import isEmpty from 'lodash-es/isEmpty'
 import merge from 'lodash-es/merge'
 
 import actions from './actions'
 import getters from './getters'
-import mutations, { State, STORAGE_KEY, WizardStep } from './mutations'
+import mutations, { STORAGE_KEY } from './mutations'
+import { State, WizardStep, AccountSettings } from './types'
 import plugins from './plugins'
 
 Vue.use(Vuex)
@@ -21,33 +24,37 @@ const defaultState: State = {
 
 const calculateWizardStep = (state: State): WizardStep => {
   const { settings } = state
-  if (settings.accessToken === '') {
+  if (isEmpty(settings.accessToken)) {
     return 'accessToken'
   }
 
   const { budgets } = settings
-  if (budgets.length === 0) {
+  if (isEmpty(budgets)) {
     return 'budget'
   }
 
-  if (budgets[0].accounts.length === 0) {
+  const { accounts } = budgets[0]
+  if (isEmpty(accounts)) {
     return 'accounts'
+  }
+
+  const isValidConfig = (settings: AccountSettings) =>
+    settings.minimumPayment != null && settings.rate != null
+  if (every(accounts, isValidConfig)) {
+    return 'accountsInterest'
   }
 
   return 'complete'
 }
 
 const state = ((): State => {
-  try {
-    const sourceState = JSON.parse(
-      window.localStorage.getItem(STORAGE_KEY) || ''
-    )
-    const outputState: State = merge({}, defaultState, sourceState)
-    outputState.wizardStep = calculateWizardStep(outputState)
-    return outputState
-  } catch (error) {
-    return defaultState
-  }
+  let outputState: State = defaultState
+  const sourceState = JSON.parse(
+    window.localStorage.getItem(STORAGE_KEY) || '{}'
+  )
+  outputState = merge({}, defaultState, sourceState)
+  outputState.wizardStep = calculateWizardStep(outputState)
+  return outputState
 })()
 
 const store = new Vuex.Store<State>({

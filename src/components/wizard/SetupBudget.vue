@@ -43,7 +43,7 @@ import ListGroup from '@/components/ListGroup.vue'
 import ListGroupItem from '@/components/ListGroupItem.vue'
 import ActionBar from '@/components/wizard/ActionBar.vue'
 import { HttpError } from '@/helpers/ynab'
-import { State, WizardStep } from '@/store/mutations'
+import { State, WizardStep } from '@/store/types'
 
 export default Vue.extend({
   name: 'WizardSetupBudget',

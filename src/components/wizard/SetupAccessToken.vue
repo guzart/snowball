@@ -24,7 +24,7 @@
 import Vue from 'vue'
 import FormInput from '@/components/FormInput.vue'
 import { HttpError } from '@/helpers/ynab'
-import { State, WizardStep } from '@/store/mutations'
+import { State, WizardStep } from '@/store/types'
 
 import ActionBar from './ActionBar.vue'
 

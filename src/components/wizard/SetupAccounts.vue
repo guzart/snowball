@@ -32,7 +32,12 @@
 <script lang="ts">
 import isEmpty from 'lodash-es/isEmpty'
 import Vue from 'vue'
-import { State, BudgetSettings, WizardStep } from '@/store/mutations'
+import {
+  State,
+  BudgetSettings,
+  WizardStep,
+  SaveBugetSettingsPayload
+} from '@/store/types'
 import ListGroup from '@/components/ListGroup.vue'
 import ListGroupItem from '@/components/ListGroupItem.vue'
 import { formatCurrency, Account, BudgetSummary } from '@/helpers/ynab'
@@ -41,13 +46,13 @@ import ActionBar from './ActionBar.vue'
 export default Vue.extend({
   name: 'WizardSetupBudget',
   data() {
-    const { settings } = <State>this.$store.state
-    const { budgets } = settings
-    const budgetSetting: BudgetSettings | null =
-      budgets.length > 0 ? budgets[0] : null
-    const selectedAccounts = budgetSetting
-      ? budgetSetting.accounts.map(a => a.accountId)
-      : []
+    let selectedAccounts: string[] = []
+    const currentBudgetSettings: BudgetSettings | null = this.$store.getters
+      .currentBudgetSettings
+
+    if (currentBudgetSettings) {
+      selectedAccounts = currentBudgetSettings.accounts.map(a => a.accountId)
+    }
 
     return {
       selectedAccounts
@@ -81,8 +86,21 @@ export default Vue.extend({
       this.$store.commit('saveWizardStep', previousStep)
     },
     onSubmit() {
-      // const { selectedBudgetId } = this
-      // this.$store.commit('saveBudgetSettings', selectedBudgetId)
+      const { commit } = this.$store
+      const { currentBudget, selectedAccounts } = this
+      const nextStep: WizardStep = 'accountsInterest'
+
+      if (currentBudget && selectedAccounts.length > 0) {
+        const payload: SaveBugetSettingsPayload = {
+          budgetId: currentBudget.id,
+          accounts: selectedAccounts.map(accountId => ({ accountId }))
+        }
+
+        commit('saveBudgetSettings', payload)
+        commit('saveWizardStep', nextStep)
+      } else {
+        alert('Please select at least one account')
+      }
     },
     toggle(accountId: string) {
       const { selectedAccounts } = this

@@ -7,6 +7,9 @@ const getters: GetterTree<State, State> = {
     const accessToken = state.settings.accessToken
     return clientFactory(accessToken)
   },
+  currentBudgetSettings: state => {
+    return state.settings.budgets[0]
+  },
   currentBudget: state => {
     const firstBudgetId = state.settings.budgets.map(b => b.budgetId)[0] || ''
     if (firstBudgetId === '') {

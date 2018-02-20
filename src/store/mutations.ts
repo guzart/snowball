@@ -1,59 +1,30 @@
-import { MutationTree, Store as vStore } from 'vuex'
+import { MutationTree } from 'vuex'
 import merge from 'lodash-es/merge'
-import { Account, BudgetSummary } from '@/helpers/ynab'
+import {
+  State,
+  SaveBugetSettingsPayload,
+  Settings,
+  SaveBudgetAccountsPayload,
+  WizardStep
+} from '@/store/types'
+import { BudgetSummary } from '@/helpers/ynab'
 
 export const STORAGE_KEY = 'snowball-state'
-
-export interface MinimumPaymentConfig {
-  percentage: number
-  minimum: number
-}
-
-export interface AccountSettings {
-  accountId: string
-  rate: number
-  minimumPayment: MinimumPaymentConfig
-}
-
-export interface BudgetSettings {
-  accounts: AccountSettings[]
-  budgetId: string
-}
-
-export interface Settings {
-  accessToken: string
-  budgets: BudgetSettings[]
-}
-
-export type WizardStep = 'accessToken' | 'budget' | 'accounts' | 'complete'
-
-export interface State {
-  settings: Settings
-  userAccounts: { [key: string]: Account[] }
-  userBudgets: BudgetSummary[]
-  wizardStep: WizardStep
-}
-
-interface SaveBudgetAccountsPayload {
-  budgetId: string
-  accounts: Account[]
-}
-
-export type Store = vStore<State>
 
 const mutations: MutationTree<State> = {
   saveAccessToken(state, accessToken: string) {
     state.settings.accessToken = accessToken
   },
-  saveUserAccounts(state, payload: SaveBudgetAccountsPayload) {
-    const { accounts, budgetId } = payload
-    state.userAccounts[budgetId] = accounts
-  },
-  saveBudgetSettings(state, budgetId: string) {
-    state.settings.budgets = [{ budgetId, accounts: [] }]
+  saveBudgetSettings(state, payload: SaveBugetSettingsPayload) {
+    const { budgetId, accounts } = payload
+    state.settings.budgets = [{ budgetId, accounts }]
   },
   saveSettings(state, settings: Partial<Settings>) {
     state.settings = merge({}, state.settings, settings)
+  },
+  saveUserAccounts(state, payload: SaveBudgetAccountsPayload) {
+    const { accounts, budgetId } = payload
+    state.userAccounts[budgetId] = accounts
   },
   saveUserBudgets(state, budgets: BudgetSummary[]) {
     state.userBudgets = budgets

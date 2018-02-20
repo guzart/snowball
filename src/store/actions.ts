@@ -1,6 +1,12 @@
 import { ActionTree } from 'vuex'
 import { State } from '@/store'
 import { YNABClient } from '@/helpers/ynab'
+import { SaveBugetSettingsPayload } from '@/store/types'
+
+interface SetupSelectedAccountsPayload {
+  budgetId: string
+  accountIds: string[]
+}
 
 const actions: ActionTree<State, State> = {
   loadBudgets: async ({ commit, getters }) => {
@@ -19,8 +25,17 @@ const actions: ActionTree<State, State> = {
     await dispatch('loadBudgets')
   },
   setupSelectedBudget: async ({ commit, dispatch }, budgetId: string) => {
-    commit('saveBudgetSettings', budgetId)
+    const payload: SaveBugetSettingsPayload = { budgetId, accounts: [] }
+    commit('saveBudgetSettings', payload)
     await dispatch('loadBudgetAccounts', budgetId)
+  },
+  setupSelectedAccounts: async (
+    { commit },
+    payload: SetupSelectedAccountsPayload
+  ) => {
+    const { budgetId, accountIds } = payload
+    const accounts = accountIds.map(accountId => ({ accountId }))
+    commit('saveBudgetSettings', { budgetId, accounts })
   }
 }
 
