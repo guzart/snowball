@@ -128,8 +128,10 @@ makeContainer() {
 
 makeContainerMaxWidths() {
   for breakpoint, containerMaxWidth in $gridBreakpoints {
-    +mediaBreakpointUp(breakpoint) {
-      max-width: containerMaxWidth;
+    if containerMaxWidth > 0 {
+      +mediaBreakpointUp(breakpoint) {
+        max-width: containerMaxWidth;
+      }
     }
   }
 }

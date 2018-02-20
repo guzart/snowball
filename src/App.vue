@@ -26,14 +26,10 @@ h2 {
   font-weight: bold;
 }
 
-.container {
+#app {
+  text-align: center;
   makeContainer();
   makeContainerMaxWidths();
-}
-
-#app {
-  @extend .container;
-  text-align: center;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
