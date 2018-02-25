@@ -15,6 +15,7 @@ body {
   font-family: 'Lato', sans-serif;
   font-size: px2rem(14);
   line-height: 1.5;
+  padding-bottom: spacing(2);
 }
 
 h1 {
