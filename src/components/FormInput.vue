@@ -1,15 +1,40 @@
 <template>
-<div v-bind:class="classObject">
-  <label v-bind:for="id">{{label}}</label>
+<div :class="classObject">
+  <label :for="id">{{label}}</label>
   <input
+    v-if="!isInputGroup"
     ref="input"
-    v-bind:type="type"
-    v-bind:id="id"
-    v-bind:placeholder="placeholder"
-    v-bind:disabled="disabled"
-    v-bind:value="value"
-    v-on:input="updateValue($event.target.value)"
+    :type="type"
+    :id="id"
+    :placeholder="placeholder"
+    :disabled="disabled"
+    :value="value"
+    :min="min"
+    :max="max"
+    :step="step"
+    @input="updateValue($event.target.value)"
   />
+  <div v-else class="input-group">
+    <div v-if="prefix" class="input-group-prepend">
+      <span class="input-group-text">{{prefix}}</span>
+    </div>
+    <input
+      v-if="isInputGroup"
+      ref="input"
+      :type="type"
+      :id="id"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :value="value"
+      :min="min"
+      :max="max"
+      :step="step"
+      @input="updateValue($event.target.value)"
+    />
+    <div v-if="suffix" class="input-group-append">
+      <span class="input-group-text">{{suffix}}</span>
+    </div>
+  </div>
   <div v-if="successMessage" class="mod-message" >
     <SimpleIcon name="success" />{{ successMessage }}
   </div>
@@ -34,8 +59,13 @@ export default Vue.extend({
       default: () => `input-${Math.ceil(Math.random() * 1000)}`
     },
     label: String,
+    max: Number,
+    min: Number,
     placeholder: String,
+    prefix: String,
+    step: Number,
     successMessage: String,
+    suffix: String,
     type: {
       type: String,
       default: 'text'
@@ -48,6 +78,9 @@ export default Vue.extend({
         'form-input': true,
         'has-error': !isEmpty(this.errorMessage)
       }
+    },
+    isInputGroup(): boolean {
+      return !!this.prefix || !!this.suffix
     }
   },
   methods: {
@@ -125,6 +158,64 @@ export default Vue.extend({
     .mod-message {
       color: $negativeRed;
     }
+  }
+
+  .input-group {
+    align-items: stretch;
+    display: flex;
+    flex-wrap: wrap;
+    position: relative;
+    width: 100%;
+
+    input {
+      flex: 1;
+    }
+
+    input:not(:first-child) {
+      border-bottom-left-radius: 0;
+      border-top-left-radius: 0;
+    }
+
+    input:not(:last-child) {
+      border-bottom-right-radius: 0;
+      border-top-right-radius: 0;
+    }
+  }
+
+  .input-group-append, .input-group-prepend {
+    display: flex;
+  }
+
+  .input-group-prepend {
+    margin-right: -1px;
+
+    .input-group-text {
+      border-bottom-right-radius: 0;
+      border-top-right-radius: 0;
+    }
+  }
+
+  .input-group-append {
+    margin-left: -1px;
+
+    .input-group-text {
+      border-bottom-left-radius: 0;
+      border-top-left-radius: 0;
+    }
+  }
+
+  .input-group-text {
+    align-items: center;
+    background-color: $mercury;
+    border-radius: $borderRadius;
+    border: 1px solid $gray;
+    display: flex;
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 0;
+    padding: 0.375rem 0.75rem;
+    text-align: center;
+    white-space: nowrap;
   }
 }
 </style>
