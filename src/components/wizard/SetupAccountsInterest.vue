@@ -8,17 +8,44 @@
     <form v-on:submit.prevent="onSubmit" class="form">
       <SimpleCardDeck>
         <SimpleCard
-          v-for="account in accounts"
-          v-bind:key="account.id"
-          v-bind:selectable="false"
+          v-for="accountConfig in accountsConfig"
+          :key="accountConfig.id"
+          :selectable="false"
         >
           <div class="SimpleCard_Body">
-            <h5 class="SimpleCard_Title">{{account.account.name}}</h5>
-            <h6 class="SimpleCard_Subtitle">{{account.account.type}}</h6>
+            <h5 class="SimpleCard_Title">{{accountConfig.account.name}}</h5>
+            <h6 class="SimpleCard_Subtitle">{{accountConfig.account.type}}</h6>
             <p>
-              <FormInput v-bind:mode="account.settings.rate" label="Interest Rate" />
-              <FormInput v-bind:mode="account.settings.minPaymentPercent" label="Min. Payment Percentage" />
-              <FormInput v-bind:mode="account.settings.minPaymentAmount" label="Min. Payment Amount" />
+              <strong>Balance </strong>
+              <span>{{currency(accountConfig.account.balance)}}</span>
+            </p>
+            <p>
+              <FormInput
+                type="number"
+                v-model="accountConfig.settings.rate"
+                :min="0"
+                :max="1000"
+                :step="0.1"
+                suffix="%"
+                label="Interest Rate"
+              />
+              <FormInput
+                type="number"
+                v-model="accountConfig.settings.minPaymentPercent"
+                :min="0"
+                :max="100"
+                :step="0.1"
+                suffix="%"
+                label="Min. Payment Percentage"
+              />
+              <FormInput
+                type="number"
+                v-model="accountConfig.settings.minPaymentAmount"
+                :min="0"
+                :step="10"
+                prefix="$"
+                label="Min. Payment Amount"
+              />
             </p>
           </div>
         </SimpleCard>
@@ -33,10 +60,12 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import * as validate from 'validate.js'
+
 import ActionBar from './ActionBar.vue'
 import { State, WizardStep } from '@/store/types'
 import { BudgetSettings, AccountSettings } from '@/store'
-import { Account } from '@/helpers/ynab'
+import { formatCurrency, Account, BudgetSummary } from '@/helpers/ynab'
 import FormInput from '@/components/FormInput.vue'
 import SimpleCard from '@/components/SimpleCard.vue'
 import SimpleCardDeck from '@/components/SimpleCardDeck.vue'
@@ -45,6 +74,21 @@ interface AccountConfig {
   id: string
   account: Account
   settings: AccountSettings
+}
+
+const constraints = {
+  rate: {
+    presence: true,
+    numericality: { greaterThanOrEqualTo: 0 }
+  },
+  minPaymentPercent: {
+    presence: true,
+    numericality: { greaterThanOrEqualTo: 0 }
+  },
+  minPaymentAmount: {
+    presence: true,
+    numericality: { greaterThanOrEqualTo: 0 }
+  }
 }
 
 export default Vue.extend({
@@ -60,7 +104,7 @@ export default Vue.extend({
     budgetSettings.accounts.map(a =>
       budgetAccounts.find(ba => a.accountId === ba.id)
     )
-    const accounts: AccountConfig[] = budgetAccounts
+    const accountsConfig: AccountConfig[] = budgetAccounts
       .filter(ba => selectedAccountsIds.indexOf(ba.id) >= 0)
       .map(ba => ({
         id: ba.id,
@@ -71,20 +115,40 @@ export default Vue.extend({
       }))
 
     return {
-      accounts
+      accountsConfig
     }
   },
   computed: {
+    currentBudget: function(): BudgetSummary | undefined {
+      return this.$store.getters.currentBudget
+    },
     isValid: function(): boolean {
-      return false
+      const errors = this.accountsConfig.map(config =>
+        validate.validate(config.settings, constraints)
+      )
+
+      return errors.filter(e => e != null).length === 0
     }
   },
   methods: {
+    currency(value: number) {
+      if (!this.currentBudget) {
+        return value.toString()
+      }
+
+      return formatCurrency(this.currentBudget.currency_format)(value)
+    },
     onBack() {
       const previousStep: WizardStep = 'accounts'
       this.$store.commit('saveWizardStep', previousStep)
     },
-    onSubmit() {}
+    onSubmit() {
+      if (!this.isValid) {
+        return
+      }
+
+      console.log('show errors')
+    }
   },
   components: {
     ActionBar,
@@ -101,6 +165,8 @@ export default Vue.extend({
 
 .WizardSetupAccountsInterest {
   .SimpleCardDeck .SimpleCard {
+    margin-bottom: spacing(2);
+
     +mediaBreakpointUp(xs) {
       flex: 0 0 100%;
     }
@@ -112,6 +178,10 @@ export default Vue.extend({
     +mediaBreakpointUp(lg) {
       flex: '0 0 calc(%s - %s)' % (percentage((1 / 3)) $gridGutterWidth);
     }
+  }
+
+  .Wizard_ActionBar {
+    margin-top: 0;
   }
 }
 </style>
