@@ -1,107 +1,93 @@
-module Main exposing (..)
+port module Main exposing (Model, Msg, update, view, subscriptions, init)
 
-import Bootstrap.Grid as Grid
-import Bootstrap.Button as Button
 import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+
+
+-- PORTS
+
+
+port checkAccessToken : () -> Cmd msg
+
+
+port receiveAccessToken : (Maybe String -> msg) -> Sub msg
+
+
+
+-- MODEL
 
 
 type alias Model =
-    { query : String
-    , results : List SearchResult
+    { accessToken : Maybe String
     }
 
 
-type alias SearchResult =
-    { id : Int
-    , name : String
-    , stars : Int
-    }
+modelInitialValue : Model
+modelInitialValue =
+    { accessToken = Nothing }
 
 
-type alias Msg =
-    { operation : String
-    , data : Int
-    }
+
+-- UPDATE
 
 
-{-| TODO add a type annotation to this value
-HINT: The type aliases above may come in handy for these exercises!
--}
-initialModel =
-    { query = "tutorial"
-    , results =
-        [ { id = 1
-          , name = "TheSeamau5/elm-checkerboardgrid-tutorial"
-          , stars = 66
-          }
-        , { id = 2
-          , name = "grzegorzbalcerek/elm-by-example"
-          , stars = 41
-          }
-        , { id = 3
-          , name = "sporto/elm-tutorial-app"
-          , stars = 35
-          }
-        , { id = 4
-          , name = "jvoigtlaender/Elm-Tutorium"
-          , stars = 10
-          }
-        , { id = 5
-          , name = "sporto/elm-tutorial-assets"
-          , stars = 7
-          }
-        ]
-    }
+type Msg
+    = CheckAccessToken
+    | RequestAccessToken
+    | UpdateAccessToken
 
 
-{-| TODO add a type annotation to this function
--}
-view model =
-    let
-        elmHubHeader =
-            header []
-                [ h1 [] [ text "ElmHub" ]
-                , span [ class "tagline" ] [ text "Like GitHub, but for Elm things." ]
-                ]
-    in
-        Grid.container []
-            [ div
-                [ class "content" ]
-                [ elmHubHeader
-                , ul [ class "results" ] (List.map viewSearchResult model.results)
-                ]
-            ]
-
-
-{-| TODO add a type annotation to this function
--}
-viewSearchResult result =
-    li []
-        [ span [ class "star-count" ] [ text (toString result.stars) ]
-        , a [ href ("https://github.com/" ++ result.name), target "_blank" ]
-            [ text result.name ]
-        , Button.button
-            [ Button.outlineSecondary, Button.attrs [ class "hide-result", onClick { operation = "DELETE_BY_ID", data = result.id } ] ]
-            [ text "X" ]
-        ]
-
-
-{-| TODO add a type annotation to this function
--}
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    if msg.operation == "DELETE_BY_ID" then
-        { model
-            | results = List.filter (\result -> result.id /= msg.data) model.results
-        }
-    else
-        model
+    case msg of
+        CheckAccessToken ->
+            ( model, Cmd.none )
+
+        RequestAccessToken ->
+            ( model, Cmd.none )
+
+        UpdateAccessToken ->
+            ( model, Cmd.none )
 
 
+
+-- VIEW
+
+
+view : Model -> Html Msg
+view model =
+    case model.accessToken of
+        Nothing ->
+            div []
+                [ text "Request token" ]
+
+        Just token ->
+            div []
+                [ text "New Html Program" ]
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+
+-- INIT
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( modelInitialValue, Cmd.none )
+
+
+main : Program Never Model Msg
 main =
-    Html.beginnerProgram
-        { view = view
+    Html.program
+        { init = init
+        , view = view
         , update = update
-        , model = initialModel
+        , subscriptions = subscriptions
         }

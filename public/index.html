@@ -16,6 +16,10 @@
 <body id="page-body">
   <script>
     var app = Elm.Main.fullscreen();
+    app.ports.checkAccessToken.subscribe(function () {
+      var accessToken = localStorage.getItem('accessToken')
+      app.ports.receiveAccessToken.send(accessToken);
+    });
   </script>
 </body>
 
