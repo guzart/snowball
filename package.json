@@ -7,7 +7,10 @@
   "private": true,
   "scripts": {
     "start": "webpack-dev-server",
-    "setup": "npm i -g firebase-tools && yarn install"
+    "setup": "npm i -g firebase-tools && yarn install",
+    "build": "NODE_ENV=production webpack",
+    "clean": "test -z dist || rm -rf dist",
+    "deploy": "yarn clean && yarn build && firebase deploy --only hosting"
   },
   "devDependencies": {
     "elm-webpack-loader": "^4.5.0",

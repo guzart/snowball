@@ -1,8 +1,8 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-// const path = require("path");
+const isProduction = process.env["NODE_ENV"] === "production";
 
 module.exports = {
-  mode: "development",
+  mode: isProduction ? "production" : "development",
 
   module: {
     rules: [
@@ -12,8 +12,8 @@ module.exports = {
         use: {
           loader: "elm-webpack-loader",
           options: {
-            debug: true,
-            warn: true
+            debug: !isProduction,
+            warn: !isProduction
           }
         }
       }
