@@ -9,21 +9,31 @@ import Html exposing (..)
 port checkAccessToken : () -> Cmd msg
 
 
-port receiveAccessToken : (Maybe String -> msg) -> Sub msg
+port requestAccessToken : () -> Cmd msg
+
+
+port updateAccessToken : (Maybe AccessToken -> msg) -> Sub msg
 
 
 
 -- MODEL
 
 
+type alias AccessToken =
+    String
+
+
 type alias Model =
-    { accessToken : Maybe String
+    { accessToken : Maybe AccessToken
+    , isLoading : Bool
     }
 
 
 modelInitialValue : Model
 modelInitialValue =
-    { accessToken = Nothing }
+    { accessToken = Nothing
+    , isLoading = True
+    }
 
 
 
@@ -33,7 +43,7 @@ modelInitialValue =
 type Msg
     = CheckAccessToken
     | RequestAccessToken
-    | UpdateAccessToken
+    | UpdateAccessToken (Maybe AccessToken)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -45,8 +55,8 @@ update msg model =
         RequestAccessToken ->
             ( model, Cmd.none )
 
-        UpdateAccessToken ->
-            ( model, Cmd.none )
+        UpdateAccessToken token ->
+            ( { model | accessToken = token, isLoading = False }, Cmd.none )
 
 
 
@@ -55,14 +65,18 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    case model.accessToken of
-        Nothing ->
-            div []
-                [ text "Request token" ]
+    if model.isLoading then
+        div []
+            [ text "Loading..." ]
+    else
+        case model.accessToken of
+            Nothing ->
+                div []
+                    [ text "Request token" ]
 
-        Just token ->
-            div []
-                [ text "New Html Program" ]
+            Just token ->
+                div []
+                    [ text "New Html Program" ]
 
 
 
@@ -71,10 +85,11 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    updateAccessToken (\accessToken -> UpdateAccessToken accessToken)
 
 
 
+-- COMMANDS
 -- INIT
 
 
