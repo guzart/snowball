@@ -10,17 +10,8 @@
 
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
     crossorigin="anonymous">
-  <script src="app.js"></script>
 </head>
 
-<body id="page-body">
-  <script>
-    var app = Elm.Main.fullscreen();
-    app.ports.checkAccessToken.subscribe(function () {
-      var accessToken = localStorage.getItem('accessToken')
-      app.ports.receiveAccessToken.send(accessToken);
-    });
-  </script>
-</body>
+<body></body>
 
 </html>
