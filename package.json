@@ -13,6 +13,7 @@
     "deploy": "yarn clean && yarn build && firebase deploy --only hosting"
   },
   "devDependencies": {
+    "dotenv": "^5.0.1",
     "elm-webpack-loader": "^4.5.0",
     "html-webpack-plugin": "^3.2.0",
     "webpack": "^4.6.0",

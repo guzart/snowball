@@ -1,3 +1,6 @@
+require("dotenv").config();
+
+const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const isProduction = process.env["NODE_ENV"] === "production";
 
@@ -21,6 +24,9 @@ module.exports = {
   },
 
   plugins: [
+    new webpack.DefinePlugin({
+      YNAB_CLIENT_ID: JSON.stringify(process.env["YNAB_CLIENT_ID"])
+    }),
     new HtmlWebpackPlugin({
       inject: "body",
       template: "src/index.html",
@@ -29,6 +35,7 @@ module.exports = {
   ],
 
   devServer: {
+    https: true,
     inline: true,
     stats: "errors-only"
   }
