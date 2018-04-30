@@ -1,6 +1,7 @@
 port module Main exposing (Model, Msg, update, view, subscriptions, init)
 
 import Html exposing (..)
+import Html.Events exposing (..)
 
 
 -- PORTS
@@ -41,42 +42,23 @@ modelInitialValue =
 
 
 type Msg
-    = CheckAccessToken
-    | RequestAccessToken
+    = RequestAccessToken
     | UpdateAccessToken (Maybe AccessToken)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        CheckAccessToken ->
-            ( model, Cmd.none )
-
         RequestAccessToken ->
-            ( model, Cmd.none )
+            ( model, requestAccessToken () )
 
         UpdateAccessToken token ->
-            ( { model | accessToken = token, isLoading = False }, Cmd.none )
+            case token of
+                Nothing ->
+                    ( { model | isLoading = False }, Cmd.none )
 
-
-
--- VIEW
-
-
-view : Model -> Html Msg
-view model =
-    if model.isLoading then
-        div []
-            [ text "Loading..." ]
-    else
-        case model.accessToken of
-            Nothing ->
-                div []
-                    [ text "Request token" ]
-
-            Just token ->
-                div []
-                    [ text "New Html Program" ]
+                Just _ ->
+                    ( { model | accessToken = token, isLoading = False }, Cmd.none )
 
 
 
@@ -90,12 +72,32 @@ subscriptions model =
 
 
 -- COMMANDS
+-- VIEW
+
+
+view : Model -> Html Msg
+view model =
+    if model.isLoading then
+        div []
+            [ text "Loading..." ]
+    else
+        case model.accessToken of
+            Nothing ->
+                div []
+                    [ button [ onClick RequestAccessToken ] [ text "Log in" ] ]
+
+            Just token ->
+                div []
+                    [ text "New Html Program" ]
+
+
+
 -- INIT
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( modelInitialValue, Cmd.none )
+    ( modelInitialValue, checkAccessToken () )
 
 
 main : Program Never Model Msg

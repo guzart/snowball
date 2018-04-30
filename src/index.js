@@ -1,7 +1,7 @@
 import firebase from "firebase/app";
 import "firebase/auth";
 
-import Elm from "./Main.elm";
+import { Main } from "./Main.elm";
 
 firebase.initializeApp({
   apiKey: "AIzaSyAQngCWXkRxRk8f6wdM6HVGDQge081Z4Uo",
@@ -14,11 +14,12 @@ firebase.initializeApp({
 
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-const app = Elm.Main.fullscreen();
+const app = Main.fullscreen();
+
+const ACCESS_TOKEN_KEY = "accessToken";
 
 app.ports.checkAccessToken.subscribe(() => {
-  const accessToken = localStorage.getItem("accessToken");
-  console.log(accessToken);
+  const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
   app.ports.updateAccessToken.send(accessToken);
 });
 
@@ -27,15 +28,13 @@ app.ports.requestAccessToken.subscribe(() => {
     .auth()
     .signInWithPopup(googleProvider)
     .then(result => {
-      // const user = result.user;
       const accessToken = result.credential.accessToken;
-      app.ports.updateAccessToken.send(accessToken);
+      console.log(firebase);
+      // localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+      // app.ports.updateAccessToken.send(accessToken);
     })
     .catch(err => {
-      const errorCode = error.code;
       const errorMessage = error.message;
-      const email = error.email;
-      const credential = error.credential;
       alert(errorMessage);
     });
 });
