@@ -7,7 +7,7 @@ import Html.Events exposing (..)
 -- PORTS
 
 
-port checkAccessToken : () -> Cmd msg
+port readAccessToken : () -> Cmd msg
 
 
 port requestAccessToken : () -> Cmd msg
@@ -20,14 +20,14 @@ port updateAccessToken : (Maybe AccessToken -> msg) -> Sub msg
 -- MODEL
 
 
-type alias AccessToken =
-    String
-
-
 type alias Model =
     { accessToken : Maybe AccessToken
     , isLoading : Bool
     }
+
+
+type alias AccessToken =
+    String
 
 
 modelInitialValue : Model
@@ -50,7 +50,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         RequestAccessToken ->
-            ( model, requestAccessToken () )
+            ( { model | isLoading = True }, requestAccessToken () )
 
         UpdateAccessToken token ->
             case token of
@@ -97,7 +97,7 @@ view model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( modelInitialValue, checkAccessToken () )
+    ( modelInitialValue, readAccessToken () )
 
 
 main : Program Never Model Msg
