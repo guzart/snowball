@@ -99,9 +99,23 @@ view model =
                     ]
 
             Just token ->
-                div []
-                    [ img [ src assets.logo ] []
-                    , text "New Html Program"
+                div [ class "container container-welcome" ]
+                    [ header []
+                        [ h1 [ class "display-3" ]
+                            [ img [ src assets.logo ] []
+                            , text "Snowball"
+                            , em [ class "mx-2" ] [ text " for " ]
+                            , strong [] [ text "YNAB" ]
+                            ]
+                        ]
+                    , footer
+                        []
+                        [ ul [ class "nav" ]
+                            [ li [ class "nav-item" ] [ button [ class "nav-link btn btn-link" ] [ text "Disclaimer" ] ]
+                            , li [ class "nav-item" ] [ button [ class "nav-link btn btn-link" ] [ text "Privacy Policy" ] ]
+                            , li [ class "nav-item" ] [ a [ class "nav-link", href "https://github.com/guzart/snowball" ] [ text "Source Code" ] ]
+                            ]
+                        ]
                     ]
 
 

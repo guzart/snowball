@@ -1,5 +1,6 @@
 import settings from "./settings";
 import { Main } from "./Main.elm";
+import "./index.scss";
 
 const ACCESS_TOKEN_STORAGE_KEY = "accessToken";
 
@@ -28,6 +29,10 @@ const app = Main.fullscreen();
 
 app.ports.readAccessToken.subscribe(() => {
   const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  if (accessToken) {
+    // TODO: Validate token is active
+  }
+
   app.ports.updateAccessToken.send(accessToken);
 });
 

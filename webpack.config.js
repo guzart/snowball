@@ -31,9 +31,26 @@ module.exports = {
         ]
       },
       {
+        test: /\.scss$/,
+        // TODO: Extract CSS
+        use: [
+          {
+            loader: "style-loader"
+          },
+          {
+            loader: "css-loader"
+          },
+          {
+            loader: "sass-loader"
+          }
+        ]
+      },
+      {
+        // TODO: optimize in production
         test: /\.(jpe?g|png|gif|svg)$/i,
         loader: "file-loader",
         options: {
+          // TODO: remove naming in dev
           name: "[name]-[hash].[ext]"
         }
       }
