@@ -1779,6 +1779,12 @@ elliptic@^6.0.0:
     minimalistic-assert "^1.0.0"
     minimalistic-crypto-utils "^1.0.0"
 
+elm-assets-loader@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/elm-assets-loader/-/elm-assets-loader-0.3.0.tgz#154674cf9036f0973aedb70384e510095cfdc9a8"
+  dependencies:
+    loader-utils "^1.0.2"
+
 elm-webpack-loader@^4.5.0:
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/elm-webpack-loader/-/elm-webpack-loader-4.5.0.tgz#b39988ac7c70db3c0922daf695c97d1d6bdb1e41"
@@ -2111,6 +2117,13 @@ figures@^2.0.0:
   resolved "https://registry.yarnpkg.com/figures/-/figures-2.0.0.tgz#3ab1a2d2a62c8bfb431a0c94cb797a2fce27c962"
   dependencies:
     escape-string-regexp "^1.0.5"
+
+file-loader@^1.1.11:
+  version "1.1.11"
+  resolved "https://registry.yarnpkg.com/file-loader/-/file-loader-1.1.11.tgz#6fe886449b0f2a936e43cabaac0cdbfb369506f8"
+  dependencies:
+    loader-utils "^1.0.2"
+    schema-utils "^0.4.5"
 
 filename-regex@^2.0.0:
   version "2.0.1"

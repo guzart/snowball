@@ -12,12 +12,29 @@ module.exports = {
       {
         test: /\.elm$/,
         exclude: [/elm-stuff/, /node_modules/],
-        use: {
-          loader: "elm-webpack-loader",
-          options: {
-            debug: !isProduction,
-            warn: !isProduction
+        use: [
+          {
+            loader: "elm-assets-loader",
+            options: {
+              module: "Assets.Main",
+              tagger: "AssetPath",
+              localPath: url => url.replace(/^.\//, "./assets/")
+            }
+          },
+          {
+            loader: "elm-webpack-loader",
+            options: {
+              debug: !isProduction,
+              warn: !isProduction
+            }
           }
+        ]
+      },
+      {
+        test: /\.(jpe?g|png|gif|svg)$/i,
+        loader: "file-loader",
+        options: {
+          name: "[name]-[hash].[ext]"
         }
       }
     ]

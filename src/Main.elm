@@ -1,7 +1,9 @@
 port module Main exposing (Model, Msg, update, view, subscriptions, init)
 
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Assets.Main exposing (assets)
 
 
 -- PORTS
@@ -23,6 +25,7 @@ port updateAccessToken : (Maybe AccessToken -> msg) -> Sub msg
 type alias Model =
     { accessToken : Maybe AccessToken
     , isLoading : Bool
+    , isRequesting : Bool
     }
 
 
@@ -34,6 +37,7 @@ modelInitialValue : Model
 modelInitialValue =
     { accessToken = Nothing
     , isLoading = True
+    , isRequesting = False
     }
 
 
@@ -50,7 +54,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         RequestAccessToken ->
-            ( { model | isLoading = True }, requestAccessToken () )
+            ( { model | isRequesting = True }, requestAccessToken () )
 
         UpdateAccessToken token ->
             case token of
@@ -84,11 +88,21 @@ view model =
         case model.accessToken of
             Nothing ->
                 div []
-                    [ button [ onClick RequestAccessToken ] [ text "Log in" ] ]
+                    [ button [ disabled model.isRequesting, onClick RequestAccessToken ]
+                        [ text
+                            (if model.isRequesting then
+                                "Connecting to YNAB..."
+                             else
+                                "Connect to YNAB"
+                            )
+                        ]
+                    ]
 
             Just token ->
                 div []
-                    [ text "New Html Program" ]
+                    [ img [ src assets.logo ] []
+                    , text "New Html Program"
+                    ]
 
 
 
