@@ -1,6 +1,6 @@
 @import "~bootstrap/scss/bootstrap";
 
-.container-welcome {
+.container--welcome {
   header {
     text-align: center;
 
@@ -29,7 +29,7 @@
         &:before {
           content: "|";
           position: absolute;
-          transform: translate(-.1rem, 25%);
+          transform: translate(-.1em, .5em);
         }
       }
     }

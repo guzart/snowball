@@ -99,7 +99,7 @@ view model =
                     ]
 
             Just token ->
-                div [ class "container container-welcome" ]
+                div [ class "container container--welcome" ]
                     [ header []
                         [ h1 [ class "display-3" ]
                             [ img [ src assets.logo ] []
