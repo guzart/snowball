@@ -16,3 +16,4 @@
 * Add manifest with service workers
 * Animate move heading from welcome into Next step
 * Replace PNG logo with SVG and reduce the margin
+* CSS dead code elimination
