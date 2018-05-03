@@ -3,6 +3,7 @@ port module Main exposing (Model, Msg, update, view, subscriptions, init)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Html.Attributes.Aria exposing (..)
 import Assets.Main exposing (assets)
 
 
@@ -158,6 +159,25 @@ siteFooter =
             , li [ class "nav-item" ] [ button [ class "nav-link btn btn-link" ] [ text "Privacy Policy" ] ]
             , li [ class "nav-item" ] [ a [ class "nav-link", href "https://github.com/guzart/snowball" ] [ text "Source Code" ] ]
             ]
+        , div [ class "modal show", tabindex -1, role "dialog", style [ ( "display", "none" ) ] ]
+            [ div [ class "modal-dialog", role "document" ]
+                [ div [ class "modal-content" ]
+                    [ div [ class "modal-header" ]
+                        [ h5 [ class "modal-title" ]
+                            [ text "Disclaimer" ]
+                        , modalCloseButton
+                        ]
+                    , div [ class "modal-body" ] []
+                    ]
+                ]
+            ]
+        ]
+
+
+modalCloseButton : Html msg
+modalCloseButton =
+    button [ type_ "button", class "close", ariaLabel "Close" ]
+        [ span [ ariaHidden True ] [ text "×" ]
         ]
 
 
