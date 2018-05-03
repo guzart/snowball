@@ -4,7 +4,6 @@
 
 ### Alpha Release
 
-* Use Typescript for non-elm development
 * Open [disclaimer](https://termsfeed.com/disclaimer/48c432a2a26a9407e90fa494a0443bde) in modal
 
 ### Beta Release
@@ -14,5 +13,6 @@
 
 ### Bling, bling!
 
+* Add manifest with service workers
 * Animate move heading from welcome into Next step
 * Replace PNG logo with SVG and reduce the margin

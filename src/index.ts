@@ -1,22 +1,27 @@
-import settings from "./settings";
+import config from "./config";
 import { Main } from "./Main.elm";
 import "./icons";
 import "./index.scss";
+
+type Dictionary = { [key: string]: string };
 
 const ACCESS_TOKEN_STORAGE_KEY = "accessToken";
 
 // Handle YNAB authentication callback
 const urlHash = window.location.hash;
 if (urlHash) {
-  const hashData = urlHash
+  const hashData: Dictionary = urlHash
     .substr(1)
     .split("&")
     .map(v => v.split("="))
-    .reduce((acc, tuple) => {
-      const [key, value] = tuple;
-      acc[key] = value;
-      return acc;
-    }, {});
+    .reduce(
+      (acc, tuple) => {
+        const [key, value] = tuple;
+        acc[key] = value;
+        return acc;
+      },
+      {} as Dictionary
+    );
 
   const { access_token, expires_in } = hashData;
   if (access_token && expires_in) {
@@ -24,7 +29,7 @@ if (urlHash) {
   }
 }
 
-function isFreshToken(token) {
+function isFreshToken(token: string) {
   // TODO: Validate token is active
   return token != null;
 }
@@ -45,7 +50,7 @@ app.ports.readAccessToken.subscribe(() => {
 
 app.ports.requestAccessToken.subscribe(() => {
   const redirectUrl = window.location.toString();
-  const clientId = settings.ynabClientId;
+  const clientId = config.ynabClientId;
   const requestUrl = `https://app.youneedabudget.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUrl}&response_type=token`;
   window.location.href = requestUrl;
 });

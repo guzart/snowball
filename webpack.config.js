@@ -10,6 +10,10 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.ts$/,
+        use: ["ts-loader"]
+      },
+      {
         test: /\.elm$/,
         exclude: [/elm-stuff/, /node_modules/],
         use: [
@@ -34,15 +38,9 @@ module.exports = {
         test: /\.scss$/,
         // TODO: Extract CSS
         use: [
-          {
-            loader: "style-loader"
-          },
-          {
-            loader: "css-loader"
-          },
-          {
-            loader: "sass-loader"
-          }
+          { loader: "style-loader" },
+          { loader: "css-loader" },
+          { loader: "sass-loader" }
         ]
       },
       {
@@ -67,6 +65,10 @@ module.exports = {
       favicon: "src/favicon.ico"
     })
   ],
+
+  resolve: {
+    extensions: [".elm", ".ts", ".js"]
+  },
 
   devServer: {
     https: true,
