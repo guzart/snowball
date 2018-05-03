@@ -1,5 +1,6 @@
 import settings from "./settings";
 import { Main } from "./Main.elm";
+import "./icons";
 import "./index.scss";
 
 const ACCESS_TOKEN_STORAGE_KEY = "accessToken";
@@ -23,17 +24,23 @@ if (urlHash) {
   }
 }
 
+function isFreshToken(token) {
+  // TODO: Validate token is active
+  return token != null;
+}
+
 // Initialize app
 
 const app = Main.fullscreen();
 
 app.ports.readAccessToken.subscribe(() => {
   const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-  if (accessToken) {
-    // TODO: Validate token is active
+  if (accessToken && !isFreshToken(accessToken)) {
+    localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+    app.ports.updateAccessToken.send(null);
+  } else {
+    app.ports.updateAccessToken.send(accessToken);
   }
-
-  app.ports.updateAccessToken.send(accessToken);
 });
 
 app.ports.requestAccessToken.subscribe(() => {

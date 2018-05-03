@@ -87,36 +87,78 @@ view model =
     else
         case model.accessToken of
             Nothing ->
-                div []
-                    [ button [ disabled model.isRequesting, onClick RequestAccessToken ]
-                        [ text
-                            (if model.isRequesting then
-                                "Connecting to YNAB..."
-                             else
-                                "Connect to YNAB"
-                            )
-                        ]
-                    ]
+                welcomePage model
 
             Just token ->
-                div [ class "container container--welcome" ]
-                    [ header []
-                        [ h1 [ class "display-3" ]
-                            [ img [ src assets.logo ] []
-                            , text "Snowball"
-                            , em [ class "mx-2" ] [ text " for " ]
-                            , strong [] [ text "YNAB" ]
-                            ]
-                        ]
-                    , footer
-                        []
-                        [ ul [ class "nav" ]
-                            [ li [ class "nav-item" ] [ button [ class "nav-link btn btn-link" ] [ text "Disclaimer" ] ]
-                            , li [ class "nav-item" ] [ button [ class "nav-link btn btn-link" ] [ text "Privacy Policy" ] ]
-                            , li [ class "nav-item" ] [ a [ class "nav-link", href "https://github.com/guzart/snowball" ] [ text "Source Code" ] ]
-                            ]
-                        ]
-                    ]
+                chooseBudgetPage model
+
+
+chooseBudgetPage : Model -> Html Msg
+chooseBudgetPage model =
+    sitePage (chooseBudgetContent model)
+
+
+chooseBudgetContent : Model -> Html Msg
+chooseBudgetContent model =
+    section []
+        [ header []
+            [ h1 [] [ text "Choose a Budget" ]
+            ]
+        ]
+
+
+welcomePage : Model -> Html Msg
+welcomePage model =
+    sitePage (welcomeContent model)
+
+
+welcomeContent : Model -> Html Msg
+welcomeContent model =
+    section [ class "o-welcome-content" ]
+        [ header [ class "text-center" ]
+            [ h1 [ class "display-3" ]
+                [ img [ src assets.logo ] []
+                , text "Snowball"
+                , em [ class "mx-2" ] [ text " for " ]
+                , strong [] [ text "YNAB" ]
+                ]
+            , p [ class "lead" ] [ text "Debt payment strategies for your YNAB budget." ]
+            ]
+        , div [ class "text-center py-4" ]
+            [ loaderButton "Connecting to YNAB..." "Connect to YNAB" model.isRequesting [ class "btn btn-primary btn-lg", onClick RequestAccessToken ]
+            ]
+        ]
+
+
+loaderButton : String -> String -> Bool -> List (Html.Attribute msg) -> Html msg
+loaderButton loadingLabel label isLoading attrs =
+    button (List.concat [ attrs, [ disabled isLoading ] ])
+        (if isLoading then
+            [ span [ class "far fa-snowflake fa-spin" ] []
+            , text (" " ++ loadingLabel)
+            ]
+         else
+            [ text label ]
+        )
+
+
+sitePage : Html msg -> Html msg
+sitePage content =
+    div [ class "container" ]
+        [ content
+        , siteFooter
+        ]
+
+
+siteFooter : Html msg
+siteFooter =
+    footer [ class "o-site-footer mt-4" ]
+        [ ul [ class "nav justify-content-center" ]
+            [ li [ class "nav-item" ] [ button [ class "nav-link btn btn-link" ] [ text "Disclaimer" ] ]
+            , li [ class "nav-item" ] [ button [ class "nav-link btn btn-link" ] [ text "Privacy Policy" ] ]
+            , li [ class "nav-item" ] [ a [ class "nav-link", href "https://github.com/guzart/snowball" ] [ text "Source Code" ] ]
+            ]
+        ]
 
 
 
