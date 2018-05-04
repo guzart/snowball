@@ -1,89 +1,127 @@
 require("dotenv").config();
 
-const webpack = require("webpack");
+const devcert = require("devcert");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const merge = require("webpack-merge");
+const webpack = require("webpack");
+
+const DEV_HOST = "snowball.guzart.com";
+
 const isProduction = process.env["NODE_ENV"] === "production";
+const isDevelopment = !isProduction;
 
-module.exports = {
-  mode: isProduction ? "production" : "development",
+module.exports = (async () => {
+  const certs = await devcert.certificateFor(DEV_HOST);
 
-  module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        use: ["ts-loader"]
-      },
-      {
-        test: /\.elm$/,
-        exclude: [/elm-stuff/, /node_modules/],
-        use: [
+  const common = {
+    mode: isProduction ? "production" : "development",
+
+    module: {
+      rules: [
+        {
+          test: /\.ts$/,
+          use: ["ts-loader"]
+        },
+        {
+          test: /\.scss$/,
+          // TODO: Extract CSS
+          use: [
+            { loader: "style-loader" },
+            { loader: "css-loader" },
+            { loader: "sass-loader" }
+          ]
+        },
+        {
+          // TODO: optimize in production
+          test: /\.(jpe?g|png|gif|svg)$/i,
+          loader: "file-loader",
+          options: {
+            name: isProduction ? "[name]-[hash].[ext]" : "[name].[ext]"
+          }
+        }
+      ]
+    },
+
+    plugins: [
+      new webpack.DefinePlugin({
+        YNAB_CLIENT_ID: JSON.stringify(process.env["YNAB_CLIENT_ID"]),
+        "process.env.NODE_ENV": JSON.stringify(
+          isProduction ? "production" : "development"
+        )
+      }),
+      new HtmlWebpackPlugin({
+        inject: "body",
+        template: "src/index.html",
+        favicon: "src/favicon.ico"
+      })
+    ],
+
+    resolve: {
+      extensions: [".elm", ".ts", ".js"]
+    }
+  };
+
+  if (isDevelopment) {
+    return merge(common, {
+      module: {
+        rules: [
           {
-            loader: "elm-assets-loader",
-            options: {
-              module: "Views.Assets",
-              tagger: "AssetPath",
-              localPath: url => url.replace(/^.\//, "./assets/")
-            }
-          },
-          {
-            loader: "elm-webpack-loader",
-            options: {
-              debug: !isProduction,
-              warn: !isProduction
-            }
+            test: /\.elm$/,
+            exclude: [/elm-stuff/, /node_modules/],
+            use: [
+              {
+                loader: "elm-assets-loader",
+                options: {
+                  module: "Views.Assets",
+                  tagger: "AssetPath",
+                  localPath: url => url.replace(/^.\//, "./assets/")
+                }
+              },
+              { loader: "elm-hot-loader" },
+              {
+                loader: "elm-webpack-loader",
+                options: { debug: true, verbose: true, warn: true }
+              }
+            ]
           }
         ]
       },
-      {
-        test: /\.scss$/,
-        // TODO: Extract CSS
-        use: [
-          { loader: "style-loader" },
-          { loader: "css-loader" },
-          { loader: "sass-loader" }
-        ]
-      },
-      {
-        // TODO: optimize in production
-        test: /\.(jpe?g|png|gif|svg)$/i,
-        loader: "file-loader",
-        options: {
-          // TODO: remove naming in dev
-          name: "[name]-[hash].[ext]"
-        }
+
+      devServer: {
+        contentBase: "./src",
+        historyApiFallback: true,
+        host: DEV_HOST,
+        https: {
+          key: certs.key,
+          cert: certs.cert
+        },
+        inline: true,
+        stats: "errors-only"
       }
-    ]
-  },
-
-  plugins: [
-    new webpack.DefinePlugin({
-      YNAB_CLIENT_ID: JSON.stringify(process.env["YNAB_CLIENT_ID"]),
-      "process.env.NODE_ENV": JSON.stringify(
-        isProduction ? "production" : "development"
-      )
-    }),
-    new HtmlWebpackPlugin({
-      inject: "body",
-      template: "src/index.html",
-      favicon: "src/favicon.ico"
-    })
-  ],
-
-  output: (() => {
-    if (isProduction) {
-      return { filename: "[name].[chunkhash].js" };
-    }
-
-    return {};
-  })(),
-
-  resolve: {
-    extensions: [".elm", ".ts", ".js"]
-  },
-
-  devServer: {
-    https: true,
-    inline: true,
-    stats: "errors-only"
+    });
   }
-};
+
+  return {
+    module: {
+      rules: [
+        {
+          test: /\.elm$/,
+          exclude: [/elm-stuff/, /node_modules/],
+          use: [
+            {
+              loader: "elm-assets-loader",
+              options: {
+                module: "Views.Assets",
+                tagger: "AssetPath",
+                localPath: url => url.replace(/^.\//, "./assets/")
+              }
+            },
+            { loader: "elm-webpack-loader" }
+          ]
+        }
+      ]
+    },
+
+    output: { filename: "[name].[chunkhash].js" }
+  };
+})();
