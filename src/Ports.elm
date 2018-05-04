@@ -1,4 +1,7 @@
-port module Ports exposing (AccessToken, readAccessToken, requestAccessToken, updateAccessToken)
+port module Ports exposing (AccessToken, disconnect, readAccessToken, requestAccessToken, updateAccessToken)
+
+
+port disconnect : () -> Cmd msg
 
 
 port readAccessToken : () -> Cmd msg

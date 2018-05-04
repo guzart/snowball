@@ -40,6 +40,7 @@ modelInitialValue =
 type Msg
     = RequestAccessToken
     | UpdateAccessToken (Maybe Ports.AccessToken)
+    | Disconnect
     | ToggleTerms
     | ToggleDisclaimer
     | TogglePrivacyPolicy
@@ -52,12 +53,10 @@ update msg model =
             ( { model | isRequesting = True }, Ports.requestAccessToken () )
 
         UpdateAccessToken token ->
-            case token of
-                Nothing ->
-                    ( { model | isLoading = False }, Cmd.none )
+            ( { model | accessToken = token, isLoading = False }, Cmd.none )
 
-                Just _ ->
-                    ( { model | accessToken = token, isLoading = False }, Cmd.none )
+        Disconnect ->
+            ( model, Ports.disconnect () )
 
         ToggleTerms ->
             ( { model | isTermsOpen = not model.isTermsOpen }, Cmd.none )
@@ -104,8 +103,9 @@ chooseBudgetPage model =
 
 chooseBudgetContent : Model -> Html Msg
 chooseBudgetContent model =
-    section []
-        [ header []
+    section [ class "o-choose-budget" ]
+        [ viewToolbar model
+        , header [ class "text-center" ]
             [ h1 [] [ text "Choose a Budget" ]
             ]
         ]
@@ -151,6 +151,15 @@ viewPage content model =
     div [ class "container", classList [ ( "modal-open", (isModalOpen model) ) ] ]
         [ content model
         , viewFooter model
+        ]
+
+
+viewToolbar : Model -> Html Msg
+viewToolbar model =
+    div []
+        [ ul [ class "nav justify-content-end" ]
+            [ li [ class "nav-item" ] [ button [ class "nav-link btn btn-link btn-sm", onClick Disconnect ] [ text "Disconnect" ] ]
+            ]
         ]
 
 

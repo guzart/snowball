@@ -1,3 +1,4 @@
+import * as moment from "moment";
 import config from "./config";
 import { Main } from "./Main.elm";
 import "./icons";
@@ -6,8 +7,9 @@ import "./index.scss";
 type Dictionary = { [key: string]: string };
 
 const ACCESS_TOKEN_STORAGE_KEY = "accessToken";
+const ACCESS_TOKEN_EXPIRES_STORAGE_KEY = "accessTokenExpiresAt";
 
-// Handle YNAB authentication callback
+// on page load, check for YNAB auth callback
 const urlHash = window.location.hash;
 if (urlHash) {
   const hashData: Dictionary = urlHash
@@ -25,32 +27,43 @@ if (urlHash) {
 
   const { access_token, expires_in } = hashData;
   if (access_token && expires_in) {
+    // store data
+    const expiresAt = moment()
+      .add(expires_in, "seconds")
+      .toISOString();
+    localStorage.setItem(ACCESS_TOKEN_EXPIRES_STORAGE_KEY, expiresAt);
     localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, access_token);
+
+    // clear access token response
+    window.location.hash = "";
   }
 }
 
-function isFreshToken(token: string) {
-  // TODO: Validate token is active
-  return token != null;
+function wipeEverything() {
+  localStorage.clear();
+  app.ports.updateAccessToken.send(null);
+  window.location.hash = "";
 }
 
 // Initialize app
 
 const app = Main.fullscreen();
 
+app.ports.disconnect.subscribe(wipeEverything);
+
 app.ports.readAccessToken.subscribe(() => {
+  const expiresAt = localStorage.getItem(ACCESS_TOKEN_EXPIRES_STORAGE_KEY);
   const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-  if (accessToken && !isFreshToken(accessToken)) {
-    localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
-    app.ports.updateAccessToken.send(null);
-  } else {
+  if (accessToken && expiresAt && moment(expiresAt).isAfter()) {
     app.ports.updateAccessToken.send(accessToken);
+  } else {
+    wipeEverything();
   }
 });
 
 app.ports.requestAccessToken.subscribe(() => {
-  const redirectUrl = window.location.toString();
+  const redirectUrl = window.location.origin;
   const clientId = config.ynabClientId;
   const requestUrl = `https://app.youneedabudget.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUrl}&response_type=token`;
-  window.location.href = requestUrl;
+  window.location.replace(requestUrl);
 });
