@@ -1,4 +1,6 @@
 import * as moment from "moment";
+import "bootstrap/js/src/modal";
+
 import config from "./config";
 import { Main } from "./Main.elm";
 import "./icons";
@@ -39,17 +41,19 @@ if (urlHash) {
   }
 }
 
-function wipeEverything() {
-  window.location.hash = "";
-  localStorage.clear();
+function logOut() {
+  [ACCESS_TOKEN_EXPIRES_STORAGE_KEY, ACCESS_TOKEN_STORAGE_KEY].map(
+    localStorage.removeItem
+  );
   app.ports.onAccessTokenChange.send(null);
+  window.location.hash = "";
 }
 
 // Initialize app
 
 const app = Main.fullscreen();
 
-app.ports.disconnect.subscribe(wipeEverything);
+app.ports.disconnect.subscribe(logOut);
 
 app.ports.readAccessToken.subscribe(() => {
   const expiresAt = localStorage.getItem(ACCESS_TOKEN_EXPIRES_STORAGE_KEY);
@@ -57,7 +61,7 @@ app.ports.readAccessToken.subscribe(() => {
   if (accessToken && expiresAt && moment(expiresAt).isAfter()) {
     app.ports.onAccessTokenChange.send(accessToken);
   } else {
-    wipeEverything();
+    logOut();
   }
 });
 

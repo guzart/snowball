@@ -1,14 +1,8 @@
 @import "~bootstrap/scss/bootstrap";
 
-.modal {
-  opacity: 1;
-
-  &.show {
-    display: block;
-  }
-}
-
 .modal-title {
+  // Needed because .modal-title is the parent of the content given
+  // to the modal function.
   h1, h2, h3, h4, h5, h6 {
     margin-bottom: 0;
   }
@@ -20,12 +14,12 @@
   }
 
   em {
-    // TODO: Needs more love
+    // TODO: better cursive font
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
   }
 
   strong {
-    // TODO: Better branding font
+    // TODO: better branding font – use logo?
     font-family: Arial, Helvetica, sans-serif;
   }
 }

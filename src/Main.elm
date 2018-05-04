@@ -39,9 +39,6 @@ type alias Model =
     , accessToken : Maybe AccessToken
     , isRequestingAccessToken : Bool
     , budgets : List Budget
-    , isTermsOpen : Bool
-    , isDisclaimerOpen : Bool
-    , isPrivacyPolicyOpen : Bool
     }
 
 
@@ -51,9 +48,6 @@ modelInitialValue =
     , accessToken = Nothing
     , isRequestingAccessToken = False
     , budgets = []
-    , isTermsOpen = False
-    , isDisclaimerOpen = False
-    , isPrivacyPolicyOpen = False
     }
 
 
@@ -66,9 +60,6 @@ type Msg
     | UpdateAccessToken (Maybe AccessToken)
     | Disconnect
     | HandleBudgetsResponse
-    | ToggleTerms
-    | ToggleDisclaimer
-    | TogglePrivacyPolicy
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -85,15 +76,6 @@ update msg model =
 
         HandleBudgetsResponse ->
             ( model, Cmd.none )
-
-        ToggleTerms ->
-            ( { model | isTermsOpen = not model.isTermsOpen }, Cmd.none )
-
-        ToggleDisclaimer ->
-            ( { model | isDisclaimerOpen = not model.isDisclaimerOpen }, Cmd.none )
-
-        TogglePrivacyPolicy ->
-            ( { model | isPrivacyPolicyOpen = not model.isPrivacyPolicyOpen }, Cmd.none )
 
 
 
@@ -175,7 +157,7 @@ loaderButton loadingLabel label isLoading attrs =
 
 viewPage : (Model -> Html Msg) -> Model -> Html Msg
 viewPage content model =
-    div [ class "container", classList [ ( "modal-open", (isModalOpen model) ) ] ]
+    div [ class "container" ]
         [ content model
         , viewFooter model
         ]
@@ -190,11 +172,6 @@ viewToolbar model =
         ]
 
 
-isModalOpen : Model -> Bool
-isModalOpen model =
-    model.isTermsOpen || model.isDisclaimerOpen || model.isPrivacyPolicyOpen
-
-
 
 -- FOOTER
 
@@ -203,22 +180,21 @@ viewFooter : Model -> Html Msg
 viewFooter model =
     footer [ class "o-site-footer mt-4" ]
         [ ul [ class "nav justify-content-center" ]
-            [ li [ class "nav-item" ] [ button [ class "nav-link btn btn-link", onClick ToggleTerms ] [ text "Terms and Conditions" ] ]
-            , li [ class "nav-item" ] [ button [ class "nav-link btn btn-link", onClick ToggleDisclaimer ] [ text "Disclaimer" ] ]
-            , li [ class "nav-item" ] [ button [ class "nav-link btn btn-link", onClick TogglePrivacyPolicy ] [ text "Privacy Policy" ] ]
+            [ li [ class "nav-item" ] [ button [ class "nav-link btn btn-link", attribute "data-toggle" "modal", attribute "data-target" "#terms-modal" ] [ text "Terms and Conditions" ] ]
+            , li [ class "nav-item" ] [ button [ class "nav-link btn btn-link", attribute "data-toggle" "modal", attribute "data-target" "#disclaimer-modal" ] [ text "Disclaimer" ] ]
+            , li [ class "nav-item" ] [ button [ class "nav-link btn btn-link", attribute "data-toggle" "modal", attribute "data-target" "#privacy-policy-modal" ] [ text "Privacy Policy" ] ]
             , li [ class "nav-item" ] [ a [ class "nav-link", href "https://github.com/guzart/snowball" ] [ text "Source Code" ] ]
             ]
-        , viewTermsModal model.isTermsOpen
-        , viewDisclaimerModal model.isDisclaimerOpen
-        , viewPrivacyPolicyModal model.isPrivacyPolicyOpen
-        , Modal.viewBackdrop ToggleDisclaimer (isModalOpen model)
+        , viewTermsModal
+        , viewDisclaimerModal
+        , viewPrivacyPolicyModal
         ]
 
 
-viewTermsModal : Bool -> Html Msg
+viewTermsModal : Html Msg
 viewTermsModal =
     Modal.view
-        { closeMessage = ToggleTerms
+        { id = "terms-modal"
         , title = Just (h5 [] [ text "Terms and Conditions (\"Terms\")" ])
         , body = Just (div [ property "innerHTML" (Encode.string """
             <p>Last updated: May 01, 2018</p>
@@ -242,10 +218,10 @@ viewTermsModal =
         }
 
 
-viewDisclaimerModal : Bool -> Html Msg
+viewDisclaimerModal : Html Msg
 viewDisclaimerModal =
     Modal.view
-        { closeMessage = ToggleDisclaimer
+        { id = "disclaimer-modal"
         , title = Just (h5 [] [ text "Disclaimer" ])
         , body = Just (div [ property "innerHTML" (Encode.string """
             <p>Last updated: May 01, 2018</p>
@@ -258,10 +234,10 @@ viewDisclaimerModal =
         }
 
 
-viewPrivacyPolicyModal : Bool -> Html Msg
+viewPrivacyPolicyModal : Html Msg
 viewPrivacyPolicyModal =
     Modal.view
-        { closeMessage = TogglePrivacyPolicy
+        { id = "privacy-policy-modal"
         , title = Just (h5 [] [ text "Privacy Policy" ])
         , body = Just (div [ property "innerHTML" (Encode.string """
             <p>Effective date: May 01, 2018</p>
