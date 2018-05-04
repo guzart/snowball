@@ -1,9 +1,12 @@
 module Main exposing (Model, Msg, update, view, subscriptions, init)
 
+import Data.AccessToken as AccessToken exposing (AccessToken(..), decoder)
+import Data.Budget exposing (Budget)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Encode as Encode
+import Json.Decode as Decode exposing (Value)
 import Ports
 import Views.Assets exposing (assets)
 import Views.Modal as Modal
@@ -13,9 +16,10 @@ import Views.Modal as Modal
 
 
 type alias Model =
-    { accessToken : Maybe Ports.AccessToken
-    , isLoading : Bool
-    , isRequesting : Bool
+    { isLoading : Bool
+    , accessToken : Maybe AccessToken
+    , isRequestingAccessToken : Bool
+    , budgets : List Budget
     , isTermsOpen : Bool
     , isDisclaimerOpen : Bool
     , isPrivacyPolicyOpen : Bool
@@ -24,9 +28,10 @@ type alias Model =
 
 modelInitialValue : Model
 modelInitialValue =
-    { accessToken = Nothing
-    , isLoading = True
-    , isRequesting = False
+    { isLoading = True
+    , accessToken = Nothing
+    , isRequestingAccessToken = False
+    , budgets = []
     , isTermsOpen = False
     , isDisclaimerOpen = False
     , isPrivacyPolicyOpen = False
@@ -39,8 +44,9 @@ modelInitialValue =
 
 type Msg
     = RequestAccessToken
-    | UpdateAccessToken (Maybe Ports.AccessToken)
+    | UpdateAccessToken (Maybe AccessToken)
     | Disconnect
+    | HandleBudgetsResponse
     | ToggleTerms
     | ToggleDisclaimer
     | TogglePrivacyPolicy
@@ -50,13 +56,16 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         RequestAccessToken ->
-            ( { model | isRequesting = True }, Ports.requestAccessToken () )
+            ( { model | isRequestingAccessToken = True }, Ports.requestAccessToken () )
 
         UpdateAccessToken token ->
             ( { model | accessToken = token, isLoading = False }, Cmd.none )
 
         Disconnect ->
             ( model, Ports.disconnect () )
+
+        HandleBudgetsResponse ->
+            ( model, Cmd.none )
 
         ToggleTerms ->
             ( { model | isTermsOpen = not model.isTermsOpen }, Cmd.none )
@@ -74,7 +83,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Ports.updateAccessToken (\accessToken -> UpdateAccessToken accessToken)
+    Ports.updateAccessToken (\val -> UpdateAccessToken (Result.toMaybe (Decode.decodeValue AccessToken.decoder val)))
 
 
 
@@ -129,7 +138,7 @@ welcomeContent model =
             , p [ class "lead" ] [ text "Debt payment strategies for your YNAB budget." ]
             ]
         , div [ class "text-center py-4" ]
-            [ loaderButton "Connecting to YNAB..." "Connect to YNAB" model.isRequesting [ class "btn btn-primary btn-lg", onClick RequestAccessToken ]
+            [ loaderButton "Connecting to YNAB..." "Connect to YNAB" model.isRequestingAccessToken [ class "btn btn-primary btn-lg", onClick RequestAccessToken ]
             ]
         ]
 

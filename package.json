@@ -6,6 +6,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
+    "make": "elm-make src/Main.elm",
     "start": "webpack-dev-server",
     "setup": "npm i -g firebase-tools && yarn install",
     "build": "NODE_ENV=production webpack",
