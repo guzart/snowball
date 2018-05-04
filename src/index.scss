@@ -1,20 +1,16 @@
 @import "~bootstrap/scss/bootstrap";
 
-@keyframes fade-in {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
 .modal {
-  animation: fade-in 0.4 ease-out;
   opacity: 1;
 
   &.show {
     display: block;
+  }
+}
+
+.modal-title {
+  h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 0;
   }
 }
 
@@ -35,11 +31,15 @@
 }
 
 .o-site-footer {
+  .nav-link {
+    font-size: .8rem;
+  }
+
   .nav-item {
     + .nav-item {
       &:before {
         content: "|";
-        font-size: 1.2em;
+        font-size: 1em;
         position: absolute;
         transform: translate(-.1em, .3em);
       }
