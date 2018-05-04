@@ -12,6 +12,25 @@ import Views.Assets exposing (assets)
 import Views.Modal as Modal
 
 
+-- INIT
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( modelInitialValue, Ports.readAccessToken () )
+
+
+main : Program Never Model Msg
+main =
+    Html.program
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
+
+
+
 -- MODEL
 
 
@@ -87,7 +106,6 @@ subscriptions model =
 
 
 
--- COMMANDS
 -- VIEW
 
 
@@ -172,6 +190,15 @@ viewToolbar model =
         ]
 
 
+isModalOpen : Model -> Bool
+isModalOpen model =
+    model.isTermsOpen || model.isDisclaimerOpen || model.isPrivacyPolicyOpen
+
+
+
+-- FOOTER
+
+
 viewFooter : Model -> Html Msg
 viewFooter model =
     footer [ class "o-site-footer mt-4" ]
@@ -186,11 +213,6 @@ viewFooter model =
         , viewPrivacyPolicyModal model.isPrivacyPolicyOpen
         , Modal.viewBackdrop ToggleDisclaimer (isModalOpen model)
         ]
-
-
-isModalOpen : Model -> Bool
-isModalOpen model =
-    model.isTermsOpen || model.isDisclaimerOpen || model.isPrivacyPolicyOpen
 
 
 viewTermsModal : Bool -> Html Msg
@@ -314,23 +336,4 @@ viewPrivacyPolicyModal =
             </ul>
         """) ] [])
         , footer = Nothing
-        }
-
-
-
--- INIT
-
-
-init : ( Model, Cmd Msg )
-init =
-    ( modelInitialValue, Ports.readAccessToken () )
-
-
-main : Program Never Model Msg
-main =
-    Html.program
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
         }
