@@ -2,31 +2,34 @@
 
 ## TODO
 
+* [ ] record API request using [proxy](https://github.com/ijpiantanida/talkback)
+* [ ] configuration properties (apiURL) from Program Flags
+
 ### Alpha Release
 
-* Add Choose a Budget
-* Add Choose your Accounts
-* Add Debt Details
-* Add Debt Payment Categories
-* Add Debt Strategies
-* Add Debt Strategy Details
-* Add "Start Over" / Reset
-* Add Disconnect button
+* choose a budget
+* choose your accounts
+* debt details
+* debt payment categories
+* debt strategies
+* debt strategy details
+* "start over" button
 
 ### Beta Release
 
-* Modal to add/create a new category
-* Open privacy policy in modal
-* Add button to purge localStorage, therefore clear data
+* [ ] create category modal
+* [ ] button to purge localStorage
+* [ ] postcss with auto prefixer
 
-### Bling, bling!
+### Bling, bling! ✨🥇
 
-* Add animations to modals / Use bootstrap library
-* Add manifest with service workers
-* Animate move heading from welcome into Next step
-* Replace PNG logo with SVG and reduce the margin
-* CSS dead code elimination
-* Support updating debt payment category balance
+* [ ] customize bootstrap style
+* [ ] update debt payment category balance from snowball
+* [ ] animate screen transitions
+* [ ] manifest with service workers
+* [ ] remove unused css from bootstrap
+* [ ] transform png logo with svg and remove margin
+* [ ] update to [webpack-serve](https://github.com/webpack-contrib/webpack-serve)
 
 ## Links
 

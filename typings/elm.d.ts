@@ -8,7 +8,7 @@ declare module "*.elm" {
     unsubscribe: (callback: Function) => void;
   }
 
-  // TODO: Actually it's an union type not an intersection type
+  // TODO: actually it's a union type not an intersection type
   type ElmPort = InputPort & OutputPort;
 
   interface ElmApp {

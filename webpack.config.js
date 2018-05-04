@@ -24,7 +24,7 @@ module.exports = (async () => {
         },
         {
           test: /\.scss$/,
-          // TODO: Extract CSS
+          // TODO: extract css
           use: [
             { loader: "style-loader" },
             { loader: "css-loader" },
@@ -32,7 +32,7 @@ module.exports = (async () => {
           ]
         },
         {
-          // TODO: optimize in production
+          // TODO: optimize for production
           test: /\.(jpe?g|png|gif|svg)$/i,
           loader: "file-loader",
           options: {
