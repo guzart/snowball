@@ -42,8 +42,8 @@ if (urlHash) {
 }
 
 function logOut() {
-  [ACCESS_TOKEN_EXPIRES_STORAGE_KEY, ACCESS_TOKEN_STORAGE_KEY].map(
-    localStorage.removeItem
+  [ACCESS_TOKEN_EXPIRES_STORAGE_KEY, ACCESS_TOKEN_STORAGE_KEY].forEach(k =>
+    localStorage.removeItem(k)
   );
   app.ports.onAccessTokenChange.send(null);
   window.location.hash = "";
