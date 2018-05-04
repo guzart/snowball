@@ -40,9 +40,9 @@ if (urlHash) {
 }
 
 function wipeEverything() {
-  localStorage.clear();
-  app.ports.updateAccessToken.send(null);
   window.location.hash = "";
+  localStorage.clear();
+  app.ports.onAccessTokenChange.send(null);
 }
 
 // Initialize app
@@ -55,7 +55,7 @@ app.ports.readAccessToken.subscribe(() => {
   const expiresAt = localStorage.getItem(ACCESS_TOKEN_EXPIRES_STORAGE_KEY);
   const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
   if (accessToken && expiresAt && moment(expiresAt).isAfter()) {
-    app.ports.updateAccessToken.send(accessToken);
+    app.ports.onAccessTokenChange.send(accessToken);
   } else {
     wipeEverything();
   }

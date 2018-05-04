@@ -102,7 +102,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Ports.updateAccessToken (\val -> UpdateAccessToken (Result.toMaybe (Decode.decodeValue AccessToken.decoder val)))
+    Ports.onAccessTokenChange (\val -> UpdateAccessToken (Result.toMaybe (Decode.decodeValue AccessToken.decoder val)))
 
 
 
