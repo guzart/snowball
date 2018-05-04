@@ -57,7 +57,10 @@ module.exports = {
 
   plugins: [
     new webpack.DefinePlugin({
-      YNAB_CLIENT_ID: JSON.stringify(process.env["YNAB_CLIENT_ID"])
+      YNAB_CLIENT_ID: JSON.stringify(process.env["YNAB_CLIENT_ID"]),
+      "process.env.NODE_ENV": JSON.stringify(
+        isProduction ? "production" : "development"
+      )
     }),
     new HtmlWebpackPlugin({
       inject: "body",
@@ -65,6 +68,14 @@ module.exports = {
       favicon: "src/favicon.ico"
     })
   ],
+
+  output: (() => {
+    if (isProduction) {
+      return { filename: "[name].[chunkhash].js" };
+    }
+
+    return {};
+  })(),
 
   resolve: {
     extensions: [".elm", ".ts", ".js"]
