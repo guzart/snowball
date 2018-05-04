@@ -1,37 +1,22 @@
-port module Main exposing (Model, Msg, update, view, subscriptions, init)
+module Main exposing (Model, Msg, update, view, subscriptions, init)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Html.Attributes.Aria exposing (..)
-import Assets.Main exposing (assets)
-
-
--- PORTS
-
-
-port readAccessToken : () -> Cmd msg
-
-
-port requestAccessToken : () -> Cmd msg
-
-
-port updateAccessToken : (Maybe AccessToken -> msg) -> Sub msg
-
+import Ports
+import Views.Assets exposing (assets)
+import Views.Modal as Modal
 
 
 -- MODEL
 
 
 type alias Model =
-    { accessToken : Maybe AccessToken
+    { accessToken : Maybe Ports.AccessToken
     , isLoading : Bool
     , isRequesting : Bool
+    , isDisclaimerOpen : Bool
     }
-
-
-type alias AccessToken =
-    String
 
 
 modelInitialValue : Model
@@ -39,6 +24,7 @@ modelInitialValue =
     { accessToken = Nothing
     , isLoading = True
     , isRequesting = False
+    , isDisclaimerOpen = False
     }
 
 
@@ -48,14 +34,15 @@ modelInitialValue =
 
 type Msg
     = RequestAccessToken
-    | UpdateAccessToken (Maybe AccessToken)
+    | UpdateAccessToken (Maybe Ports.AccessToken)
+    | ToggleDisclaimer
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         RequestAccessToken ->
-            ( { model | isRequesting = True }, requestAccessToken () )
+            ( { model | isRequesting = True }, Ports.requestAccessToken () )
 
         UpdateAccessToken token ->
             case token of
@@ -65,6 +52,9 @@ update msg model =
                 Just _ ->
                     ( { model | accessToken = token, isLoading = False }, Cmd.none )
 
+        ToggleDisclaimer ->
+            ( { model | isDisclaimerOpen = not model.isDisclaimerOpen }, Cmd.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -72,7 +62,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    updateAccessToken (\accessToken -> UpdateAccessToken accessToken)
+    Ports.updateAccessToken (\accessToken -> UpdateAccessToken accessToken)
 
 
 
@@ -96,7 +86,7 @@ view model =
 
 chooseBudgetPage : Model -> Html Msg
 chooseBudgetPage model =
-    sitePage (chooseBudgetContent model)
+    viewPage chooseBudgetContent model
 
 
 chooseBudgetContent : Model -> Html Msg
@@ -110,7 +100,7 @@ chooseBudgetContent model =
 
 welcomePage : Model -> Html Msg
 welcomePage model =
-    sitePage (welcomeContent model)
+    viewPage welcomeContent model
 
 
 welcomeContent : Model -> Html Msg
@@ -143,42 +133,40 @@ loaderButton loadingLabel label isLoading attrs =
         )
 
 
-sitePage : Html msg -> Html msg
-sitePage content =
+viewPage : (Model -> Html Msg) -> Model -> Html Msg
+viewPage content model =
     div [ class "container" ]
-        [ content
-        , siteFooter
+        [ content model
+        , viewFooter model
         ]
 
 
-siteFooter : Html msg
-siteFooter =
+viewFooter : Model -> Html Msg
+viewFooter model =
     footer [ class "o-site-footer mt-4" ]
         [ ul [ class "nav justify-content-center" ]
-            [ li [ class "nav-item" ] [ button [ class "nav-link btn btn-link" ] [ text "Disclaimer" ] ]
+            [ li [ class "nav-item" ] [ button [ class "nav-link btn btn-link", onClick ToggleDisclaimer ] [ text "Disclaimer" ] ]
             , li [ class "nav-item" ] [ button [ class "nav-link btn btn-link" ] [ text "Privacy Policy" ] ]
             , li [ class "nav-item" ] [ a [ class "nav-link", href "https://github.com/guzart/snowball" ] [ text "Source Code" ] ]
             ]
-        , div [ class "modal show", tabindex -1, role "dialog", style [ ( "display", "none" ) ] ]
-            [ div [ class "modal-dialog", role "document" ]
-                [ div [ class "modal-content" ]
-                    [ div [ class "modal-header" ]
-                        [ h5 [ class "modal-title" ]
-                            [ text "Disclaimer" ]
-                        , modalCloseButton
-                        ]
-                    , div [ class "modal-body" ] []
-                    ]
-                ]
-            ]
+        , viewDisclaimerModal model.isDisclaimerOpen
+        , Modal.viewBackdrop ToggleDisclaimer (showModalBackdrop model)
         ]
 
 
-modalCloseButton : Html msg
-modalCloseButton =
-    button [ type_ "button", class "close", ariaLabel "Close" ]
-        [ span [ ariaHidden True ] [ text "×" ]
-        ]
+showModalBackdrop : Model -> Bool
+showModalBackdrop model =
+    model.isDisclaimerOpen
+
+
+viewDisclaimerModal : Bool -> Html Msg
+viewDisclaimerModal =
+    Modal.view
+        { closeMessage = ToggleDisclaimer
+        , title = Just (h5 [] [ text "Disclaimer" ])
+        , body = Just (text "Content")
+        , footer = Nothing
+        }
 
 
 
@@ -187,7 +175,7 @@ modalCloseButton =
 
 init : ( Model, Cmd Msg )
 init =
-    ( modelInitialValue, readAccessToken () )
+    ( modelInitialValue, Ports.readAccessToken () )
 
 
 main : Program Never Model Msg

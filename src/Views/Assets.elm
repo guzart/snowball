@@ -1,4 +1,4 @@
-module Assets.Main exposing (AssetPath(..), assets)
+module Views.Assets exposing (AssetPath(..), assets)
 
 
 type AssetPath

@@ -20,7 +20,7 @@ module.exports = {
           {
             loader: "elm-assets-loader",
             options: {
-              module: "Assets.Main",
+              module: "Views.Assets",
               tagger: "AssetPath",
               localPath: url => url.replace(/^.\//, "./assets/")
             }
