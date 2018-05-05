@@ -34,7 +34,13 @@ init val =
         session =
             decodeSessionFromJson val
     in
-        ( { modelInitialValue | apiUrl = apiUrl, session = session }, saveSession session )
+        ( { modelInitialValue
+            | apiUrl = apiUrl
+            , session = session
+            , currentScreen = screenFromSession session
+          }
+        , saveSession session
+        )
 
 
 decodeApiUrlFromJson : Value -> Maybe String
@@ -61,8 +67,8 @@ decodeSessionFromJson json =
 type alias Model =
     { apiUrl : Maybe String
     , session : Session
-    , isRequestingAccessToken : Bool
     , currentScreen : Screen
+    , isRequestingAccessToken : Bool
     }
 
 
@@ -70,19 +76,35 @@ modelInitialValue : Model
 modelInitialValue =
     { apiUrl = Nothing
     , session = Session.empty
+    , currentScreen = WelcomeScreen
     , isRequestingAccessToken = False
-    , currentScreen = Welcome
     }
 
 
 type Screen
-    = Welcome
-    | ChooseBudget
-    | ChooseAccounts
-    | DebtDetails
-    | PaymentCategory
-    | DebtStrategies
-    | DebtStrategy
+    = WelcomeScreen
+    | ChooseBudgetScreen
+    | ChooseAccountsScreen
+    | DebtDetailsScreen
+    | PaymentCategoryScreen
+    | DebtStrategiesScreen
+    | DebtStrategyScreen
+    | ErrorScreen
+
+
+screenFromSession : Session -> Screen
+screenFromSession session =
+    case session.token of
+        Nothing ->
+            WelcomeScreen
+
+        Just _ ->
+            case session.budget of
+                Nothing ->
+                    ChooseBudgetScreen
+
+                Just _ ->
+                    ChooseAccountsScreen
 
 
 
@@ -100,7 +122,9 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         RequestAccessToken ->
-            ( { model | isRequestingAccessToken = True }, Ports.requestAccessToken () )
+            ( { model | isRequestingAccessToken = True }
+            , Ports.requestAccessToken ()
+            )
 
         UpdateAccessToken maybeToken ->
             let
@@ -108,7 +132,9 @@ update msg model =
                     model.session
                         |> Session.setToken maybeToken
             in
-                ( { model | session = newSession }, Cmd.none )
+                ( { model | session = newSession, currentScreen = screenFromSession newSession }
+                , Cmd.none
+                )
 
         Disconnect ->
             let
@@ -116,7 +142,9 @@ update msg model =
                     model.session
                         |> Session.setToken Nothing
             in
-                ( { model | session = newSession }, saveSession newSession )
+                ( { model | session = newSession, currentScreen = WelcomeScreen }
+                , saveSession newSession
+                )
 
         HandleBudgetsResponse ->
             ( model, Cmd.none )
@@ -145,21 +173,24 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    case model.session.token of
-        Nothing ->
-            welcomePage model
+    case model.currentScreen of
+        WelcomeScreen ->
+            viewWelcome model
 
-        Just _ ->
-            chooseBudgetPage model
+        ChooseBudgetScreen ->
+            viewChooseBudget model
 
-
-chooseBudgetPage : Model -> Html Msg
-chooseBudgetPage model =
-    viewPage chooseBudgetContent model
+        _ ->
+            viewError model
 
 
-chooseBudgetContent : Model -> Html Msg
-chooseBudgetContent model =
+viewChooseBudget : Model -> Html Msg
+viewChooseBudget model =
+    viewScreen viewChooseBudgetContent model
+
+
+viewChooseBudgetContent : Model -> Html Msg
+viewChooseBudgetContent model =
     section [ class "o-choose-budget" ]
         [ viewToolbar model
         , header [ class "text-center" ]
@@ -168,13 +199,13 @@ chooseBudgetContent model =
         ]
 
 
-welcomePage : Model -> Html Msg
-welcomePage model =
-    viewPage welcomeContent model
+viewWelcome : Model -> Html Msg
+viewWelcome model =
+    viewScreen viewWelcomeContent model
 
 
-welcomeContent : Model -> Html Msg
-welcomeContent model =
+viewWelcomeContent : Model -> Html Msg
+viewWelcomeContent model =
     section [ class "o-welcome-content" ]
         [ header [ class "text-center" ]
             [ h1 [ class "display-3" ]
@@ -191,6 +222,24 @@ welcomeContent model =
         ]
 
 
+viewError : Model -> Html Msg
+viewError model =
+    viewScreen viewErrorContent model
+
+
+viewErrorContent : Model -> Html Msg
+viewErrorContent model =
+    section [ class "o-error-content" ]
+        [ header [ class "text-center" ]
+            [ h1 [ class "display-3" ] [ text "&ldquo;Unlike some politicians," ]
+            , h2 [ class "display-4" ]
+                [ text "I can admin to a mistake."
+                , small [] [ text "– Nelson Mandela" ]
+                ]
+            ]
+        ]
+
+
 loaderButton : String -> String -> Bool -> List (Html.Attribute msg) -> Html msg
 loaderButton loadingLabel label isLoading attrs =
     button (List.concat [ attrs, [ disabled isLoading ] ])
@@ -203,8 +252,8 @@ loaderButton loadingLabel label isLoading attrs =
         )
 
 
-viewPage : (Model -> Html Msg) -> Model -> Html Msg
-viewPage content model =
+viewScreen : (Model -> Html Msg) -> Model -> Html Msg
+viewScreen content model =
     div [ class "container" ]
         [ content model
         , viewFooter model
