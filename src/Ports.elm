@@ -1,15 +1,12 @@
-port module Ports exposing (disconnect, onAccessTokenChange, readAccessToken, requestAccessToken)
+port module Ports exposing (onAccessTokenChange, requestAccessToken, saveSession)
 
 import Json.Encode exposing (Value)
 
 
-port disconnect : () -> Cmd msg
-
-
-port readAccessToken : () -> Cmd msg
-
-
 port requestAccessToken : () -> Cmd msg
+
+
+port saveSession : String -> Cmd msg
 
 
 port onAccessTokenChange : (Value -> msg) -> Sub msg

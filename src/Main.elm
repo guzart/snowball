@@ -1,7 +1,6 @@
 module Main exposing (Model, Msg, update, view, subscriptions, init)
 
 import Data.AccessToken as AccessToken exposing (AccessToken(..), decoder)
-import Data.Budget exposing (Budget)
 import Data.Session as Session exposing (Session)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -28,24 +27,31 @@ main =
 
 init : Value -> ( Model, Cmd Msg )
 init val =
-    ( { modelInitialValue | session = decodeSessionFromJson val }, Cmd.none )
+    let
+        apiUrl =
+            decodeApiUrlFromJson val
+
+        session =
+            decodeSessionFromJson val
+    in
+        ( { modelInitialValue | apiUrl = apiUrl, session = session }, saveSession session )
+
+
+decodeApiUrlFromJson : Value -> Maybe String
+decodeApiUrlFromJson json =
+    json
+        |> Decode.decodeValue Decode.string
+        |> Result.toMaybe
+        |> Maybe.andThen (Decode.decodeString (Decode.field "apiUrl" Decode.string) >> Result.toMaybe)
 
 
 decodeSessionFromJson : Value -> Session
 decodeSessionFromJson json =
-    let
-        maybeSession =
-            json
-                |> Decode.decodeValue Decode.string
-                |> Result.toMaybe
-                |> Maybe.andThen (Decode.decodeString Session.decoder >> Result.toMaybe)
-    in
-        case maybeSession of
-            Just session ->
-                session
-
-            Nothing ->
-                modelInitialValue.session
+    json
+        |> Decode.decodeValue Decode.string
+        |> Result.toMaybe
+        |> Maybe.andThen (Decode.decodeString (Decode.field "session" Session.decoder) >> Result.toMaybe)
+        |> Maybe.withDefault Session.empty
 
 
 
@@ -53,18 +59,30 @@ decodeSessionFromJson json =
 
 
 type alias Model =
-    { session : Session
+    { apiUrl : Maybe String
+    , session : Session
     , isRequestingAccessToken : Bool
-    , budgets : List Budget
+    , currentScreen : Screen
     }
 
 
 modelInitialValue : Model
 modelInitialValue =
-    { session = { apiUrl = "", token = Nothing }
+    { apiUrl = Nothing
+    , session = Session.empty
     , isRequestingAccessToken = False
-    , budgets = []
+    , currentScreen = Welcome
     }
+
+
+type Screen
+    = Welcome
+    | ChooseBudget
+    | ChooseAccounts
+    | DebtDetails
+    | PaymentCategory
+    | DebtStrategies
+    | DebtStrategy
 
 
 
@@ -84,14 +102,32 @@ update msg model =
         RequestAccessToken ->
             ( { model | isRequestingAccessToken = True }, Ports.requestAccessToken () )
 
-        UpdateAccessToken token ->
-            ( { model | session = { apiUrl = model.session.apiUrl, token = token } }, Cmd.none )
+        UpdateAccessToken maybeToken ->
+            let
+                newSession =
+                    model.session
+                        |> Session.setToken maybeToken
+            in
+                ( { model | session = newSession }, Cmd.none )
 
         Disconnect ->
-            ( model, Ports.disconnect () )
+            let
+                newSession =
+                    model.session
+                        |> Session.setToken Nothing
+            in
+                ( { model | session = newSession }, saveSession newSession )
 
         HandleBudgetsResponse ->
             ( model, Cmd.none )
+
+
+saveSession : Session -> Cmd msg
+saveSession session =
+    session
+        |> Session.encode
+        |> Encode.encode 0
+        |> Ports.saveSession
 
 
 
@@ -113,7 +149,7 @@ view model =
         Nothing ->
             welcomePage model
 
-        Just token ->
+        Just _ ->
             chooseBudgetPage model
 
 

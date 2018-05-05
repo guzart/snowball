@@ -2,6 +2,9 @@
 
 ## TODO
 
+* calculate current screen from model
+* load budgets if not available - fire when setting the screen?
+
 ### Alpha Release
 
 * choose a budget
@@ -17,6 +20,9 @@
 * [ ] create category modal
 * [ ] button to purge localStorage
 * [ ] postcss with auto prefixer
+* [ ] test that session is decoded correctly
+* [ ] handle session decode error
+* [ ] handle api url decode error
 
 ### Bling, bling! ✨🥇
 

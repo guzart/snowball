@@ -8,10 +8,38 @@ import "./index.scss";
 
 type Dictionary = { [key: string]: string };
 
-const ACCESS_TOKEN_STORAGE_KEY = "accessToken";
 const ACCESS_TOKEN_EXPIRES_STORAGE_KEY = "accessTokenExpiresAt";
+const SESSION_STORAGE_KEY = "session";
 
-// on page load, check for YNAB auth callback
+// helper functions
+
+function loadSession() {
+  const expiresAt = localStorage.getItem(ACCESS_TOKEN_EXPIRES_STORAGE_KEY);
+  const session = localStorage.getItem(SESSION_STORAGE_KEY);
+  if (session && expiresAt && moment(expiresAt).isAfter()) {
+    return JSON.parse(session);
+  }
+
+  return null;
+}
+
+// Initialize app
+
+const flags = JSON.stringify({ apiUrl, session: loadSession() });
+const app = Main.fullscreen(flags);
+
+app.ports.requestAccessToken.subscribe(() => {
+  const redirectUrl = window.location.origin;
+  const requestUrl = `https://app.youneedabudget.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUrl}&response_type=token`;
+  window.location.replace(requestUrl);
+});
+
+app.ports.saveSession.subscribe((serializedSession: string) => {
+  console.log(serializedSession);
+  localStorage.setItem(SESSION_STORAGE_KEY, serializedSession);
+});
+
+// check for YNAB auth callback, access token is in url hash
 const urlHash = window.location.hash;
 if (urlHash) {
   const hashData: Dictionary = urlHash
@@ -29,54 +57,12 @@ if (urlHash) {
 
   const { access_token, expires_in } = hashData;
   if (access_token && expires_in) {
-    // store data
     const expiresAt = moment()
       .add(expires_in, "seconds")
       .toISOString();
     localStorage.setItem(ACCESS_TOKEN_EXPIRES_STORAGE_KEY, expiresAt);
-    localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, access_token);
-
-    // clear access token response
-    window.location.hash = "";
-  }
-}
-
-function logOut() {
-  [ACCESS_TOKEN_EXPIRES_STORAGE_KEY, ACCESS_TOKEN_STORAGE_KEY].forEach(k =>
-    localStorage.removeItem(k)
-  );
-  app.ports.onAccessTokenChange.send(null);
-  window.location.hash = "";
-}
-
-function getAccessToken() {
-  const expiresAt = localStorage.getItem(ACCESS_TOKEN_EXPIRES_STORAGE_KEY);
-  const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-  if (accessToken && expiresAt && moment(expiresAt).isAfter()) {
-    return accessToken;
+    app.ports.onAccessTokenChange.send(access_token);
   }
 
-  return null;
+  // window.location.hash = "";
 }
-
-// Initialize app
-
-const flags = JSON.stringify({ apiUrl, token: getAccessToken() });
-const app = Main.fullscreen(flags);
-
-app.ports.disconnect.subscribe(logOut);
-
-app.ports.readAccessToken.subscribe(() => {
-  const token = getAccessToken();
-  if (token) {
-    app.ports.onAccessTokenChange.send(token);
-  } else {
-    logOut();
-  }
-});
-
-app.ports.requestAccessToken.subscribe(() => {
-  const redirectUrl = window.location.origin;
-  const requestUrl = `https://app.youneedabudget.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUrl}&response_type=token`;
-  window.location.replace(requestUrl);
-});
