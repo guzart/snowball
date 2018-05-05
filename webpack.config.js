@@ -44,6 +44,9 @@ module.exports = (async () => {
 
     plugins: [
       new webpack.DefinePlugin({
+        YNAB_API_URL: JSON.stringify(
+          isProduction ? process.env["YNAB_API_URL"] : "http://localhost:8888"
+        ),
         YNAB_CLIENT_ID: JSON.stringify(process.env["YNAB_CLIENT_ID"]),
         "process.env.NODE_ENV": JSON.stringify(
           isProduction ? "production" : "development"

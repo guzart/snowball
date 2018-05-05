@@ -3,7 +3,6 @@
 ## TODO
 
 * [ ] record API request using [proxy](https://github.com/ijpiantanida/talkback)
-* [ ] configuration properties (apiURL) from Program Flags
 
 ### Alpha Release
 

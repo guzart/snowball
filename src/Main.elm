@@ -2,6 +2,7 @@ module Main exposing (Model, Msg, update, view, subscriptions, init)
 
 import Data.AccessToken as AccessToken exposing (AccessToken(..), decoder)
 import Data.Budget exposing (Budget)
+import Data.Session as Session exposing (Session)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -15,14 +16,9 @@ import Views.Modal as Modal
 -- INIT
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( modelInitialValue, Ports.readAccessToken () )
-
-
-main : Program Never Model Msg
+main : Program Value Model Msg
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , view = view
         , update = update
@@ -30,13 +26,34 @@ main =
         }
 
 
+init : Value -> ( Model, Cmd Msg )
+init val =
+    ( { modelInitialValue | session = decodeSessionFromJson val }, Cmd.none )
+
+
+decodeSessionFromJson : Value -> Session
+decodeSessionFromJson json =
+    let
+        maybeSession =
+            json
+                |> Decode.decodeValue Decode.string
+                |> Result.toMaybe
+                |> Maybe.andThen (Decode.decodeString Session.decoder >> Result.toMaybe)
+    in
+        case maybeSession of
+            Just session ->
+                session
+
+            Nothing ->
+                modelInitialValue.session
+
+
 
 -- MODEL
 
 
 type alias Model =
-    { isLoading : Bool
-    , accessToken : Maybe AccessToken
+    { session : Session
     , isRequestingAccessToken : Bool
     , budgets : List Budget
     }
@@ -44,8 +61,7 @@ type alias Model =
 
 modelInitialValue : Model
 modelInitialValue =
-    { isLoading = True
-    , accessToken = Nothing
+    { session = { apiUrl = "", token = Nothing }
     , isRequestingAccessToken = False
     , budgets = []
     }
@@ -69,7 +85,7 @@ update msg model =
             ( { model | isRequestingAccessToken = True }, Ports.requestAccessToken () )
 
         UpdateAccessToken token ->
-            ( { model | accessToken = token, isLoading = False }, Cmd.none )
+            ( { model | session = { apiUrl = model.session.apiUrl, token = token } }, Cmd.none )
 
         Disconnect ->
             ( model, Ports.disconnect () )
@@ -93,16 +109,12 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    if model.isLoading then
-        div []
-            [ text "Loading..." ]
-    else
-        case model.accessToken of
-            Nothing ->
-                welcomePage model
+    case model.session.token of
+        Nothing ->
+            welcomePage model
 
-            Just token ->
-                chooseBudgetPage model
+        Just token ->
+            chooseBudgetPage model
 
 
 chooseBudgetPage : Model -> Html Msg

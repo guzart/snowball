@@ -16,6 +16,6 @@ declare module "*.elm" {
   }
 
   export namespace Main {
-    export function fullscreen(): ElmApp;
+    export function fullscreen(flags: any): ElmApp;
   }
 }

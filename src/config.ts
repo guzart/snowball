@@ -1,5 +1,3 @@
-const settings = {
-  ynabClientId: YNAB_CLIENT_ID
-};
+export const apiUrl = YNAB_API_URL;
 
-export default settings;
+export const clientId = YNAB_CLIENT_ID;

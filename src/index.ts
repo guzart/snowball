@@ -1,7 +1,7 @@
 import * as moment from "moment";
 import "bootstrap/js/src/modal";
 
-import config from "./config";
+import { apiUrl, clientId } from "./config";
 import { Main } from "./Main.elm";
 import "./icons";
 import "./index.scss";
@@ -49,17 +49,27 @@ function logOut() {
   window.location.hash = "";
 }
 
+function getAccessToken() {
+  const expiresAt = localStorage.getItem(ACCESS_TOKEN_EXPIRES_STORAGE_KEY);
+  const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  if (accessToken && expiresAt && moment(expiresAt).isAfter()) {
+    return accessToken;
+  }
+
+  return null;
+}
+
 // Initialize app
 
-const app = Main.fullscreen();
+const flags = JSON.stringify({ apiUrl, token: getAccessToken() });
+const app = Main.fullscreen(flags);
 
 app.ports.disconnect.subscribe(logOut);
 
 app.ports.readAccessToken.subscribe(() => {
-  const expiresAt = localStorage.getItem(ACCESS_TOKEN_EXPIRES_STORAGE_KEY);
-  const accessToken = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-  if (accessToken && expiresAt && moment(expiresAt).isAfter()) {
-    app.ports.onAccessTokenChange.send(accessToken);
+  const token = getAccessToken();
+  if (token) {
+    app.ports.onAccessTokenChange.send(token);
   } else {
     logOut();
   }
@@ -67,7 +77,6 @@ app.ports.readAccessToken.subscribe(() => {
 
 app.ports.requestAccessToken.subscribe(() => {
   const redirectUrl = window.location.origin;
-  const clientId = config.ynabClientId;
   const requestUrl = `https://app.youneedabudget.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUrl}&response_type=token`;
   window.location.replace(requestUrl);
 });
