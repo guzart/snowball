@@ -35,7 +35,6 @@ app.ports.requestAccessToken.subscribe(() => {
 });
 
 app.ports.saveSession.subscribe((serializedSession: string) => {
-  console.log(serializedSession);
   localStorage.setItem(SESSION_STORAGE_KEY, serializedSession);
 });
 
