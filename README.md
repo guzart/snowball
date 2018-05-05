@@ -2,8 +2,6 @@
 
 ## TODO
 
-* [ ] record API request using [proxy](https://github.com/ijpiantanida/talkback)
-
 ### Alpha Release
 
 * choose a budget

@@ -6,14 +6,17 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "make": "elm-make src/Main.elm",
-    "start": "webpack-dev-server --hot --inline",
-    "setup": "npm i -g firebase-tools && yarn install",
     "build": "NODE_ENV=production webpack",
     "clean": "test -z dist || rm -rf dist",
-    "deploy": "yarn clean && yarn build && firebase deploy --only hosting"
+    "deploy": "yarn clean && yarn build && firebase deploy --only hosting",
+    "dev": "webpack-dev-server --hot --inline",
+    "setup": "npm i -g firebase-tools && yarn install",
+    "start": "concurrently 'yarn dev' 'yarn tapes'",
+    "tapes": "ts-node -O '{\"module\":\"commonjs\"}' lib/tapesServer.ts"
   },
   "devDependencies": {
+    "@types/dotenv": "^4.0.3",
+    "concurrently": "^3.5.1",
     "css-loader": "^0.28.11",
     "devcert": "^1.0.0",
     "dotenv": "^5.0.1",
@@ -25,7 +28,9 @@
     "node-sass": "^4.9.0",
     "sass-loader": "^7.0.1",
     "style-loader": "^0.21.0",
+    "talkback": "^1.2.0",
     "ts-loader": "^4.2.0",
+    "ts-node": "^6.0.2",
     "typescript": "^2.8.3",
     "webpack": "^4.6.0",
     "webpack-cli": "^2.0.15",
