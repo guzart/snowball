@@ -5,20 +5,20 @@ import Data.Budget as Budget exposing (Budget)
 import Http
 import HttpBuilder exposing (RequestBuilder, withBody, withExpect, withQueryParams)
 import Json.Decode as Decode
-import Request.Helpers exposing (apiUrl)
 
 
 -- SINGLE --
 -- LIST --
 
 
-list : Maybe AccessToken -> Http.Request (List Budget)
-list maybeToken =
+list : String -> Maybe AccessToken -> Http.Request (List Budget)
+list apiUrl maybeToken =
     let
         expect =
             Http.expectJson (Decode.at [ "data", "budgets" ] (Decode.list Budget.decoder))
     in
-        apiUrl "/budgets/"
+        apiUrl
+            ++ "/budgets/"
             |> HttpBuilder.get
             |> HttpBuilder.withExpect expect
             |> withAuthorization maybeToken

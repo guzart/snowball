@@ -11,7 +11,7 @@ type AccessToken
 
 decoder : Decoder AccessToken
 decoder =
-    Decode.map (\str -> AccessToken str) Decode.string
+    Decode.map AccessToken Decode.string
 
 
 encode : AccessToken -> Value

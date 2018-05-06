@@ -1,13 +1,16 @@
 module Main exposing (Model, Msg, update, view, subscriptions, init)
 
 import Data.AccessToken as AccessToken exposing (AccessToken(..), decoder)
+import Data.Budget exposing (Budget)
 import Data.Session as Session exposing (Session)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Http
 import Json.Encode as Encode
 import Json.Decode as Decode exposing (Value)
 import Ports
+import Request.Budget as BudgetRequest
 import Views.Assets exposing (assets)
 import Views.Modal as Modal
 
@@ -28,19 +31,28 @@ main =
 init : Value -> ( Model, Cmd Msg )
 init val =
     let
-        apiUrl =
+        maybeApiUrl =
             decodeApiUrlFromJson val
 
         session =
             decodeSessionFromJson val
     in
-        ( { modelInitialValue
-            | apiUrl = apiUrl
-            , session = session
-            , currentScreen = screenFromSession session
-          }
-        , saveSession session
-        )
+        case maybeApiUrl of
+            Nothing ->
+                ( { modelInitialValue | currentScreen = ErrorScreen }, Cmd.none )
+
+            Just apiUrl ->
+                let
+                    model =
+                        { modelInitialValue
+                            | apiUrl = apiUrl
+                            , session = session
+                            , currentScreen = screenFromSession session
+                        }
+                in
+                    ( model
+                    , Cmd.batch [ saveSession session, loadScreenData model ]
+                    )
 
 
 decodeApiUrlFromJson : Value -> Maybe String
@@ -65,19 +77,23 @@ decodeSessionFromJson json =
 
 
 type alias Model =
-    { apiUrl : Maybe String
-    , session : Session
-    , currentScreen : Screen
+    { apiUrl : String
+    , errorMessage : Maybe String
     , isRequestingAccessToken : Bool
+    , currentScreen : Screen
+    , session : Session
+    , budgets : Maybe (List Budget)
     }
 
 
 modelInitialValue : Model
 modelInitialValue =
-    { apiUrl = Nothing
-    , session = Session.empty
-    , currentScreen = WelcomeScreen
+    { apiUrl = ""
+    , errorMessage = Nothing
     , isRequestingAccessToken = False
+    , currentScreen = WelcomeScreen
+    , session = Session.empty
+    , budgets = Nothing
     }
 
 
@@ -115,7 +131,8 @@ type Msg
     = RequestAccessToken
     | UpdateAccessToken (Maybe AccessToken)
     | Disconnect
-    | HandleBudgetsResponse
+    | SetCurrentScreen Screen
+    | HandleBudgetsResponse (Result Http.Error (List Budget))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -131,10 +148,11 @@ update msg model =
                 newSession =
                     model.session
                         |> Session.setToken maybeToken
+
+                newModel =
+                    { model | session = newSession, currentScreen = screenFromSession newSession }
             in
-                ( { model | session = newSession, currentScreen = screenFromSession newSession }
-                , Cmd.none
-                )
+                ( newModel, saveSession newSession )
 
         Disconnect ->
             let
@@ -146,16 +164,50 @@ update msg model =
                 , saveSession newSession
                 )
 
-        HandleBudgetsResponse ->
-            ( model, Cmd.none )
+        SetCurrentScreen currentScreen ->
+            let
+                newModel =
+                    { model | currentScreen = currentScreen }
+            in
+                ( newModel, loadScreenData newModel )
+
+        HandleBudgetsResponse result ->
+            case result of
+                Ok budgets ->
+                    ( { model | budgets = Just budgets }, Cmd.none )
+
+                Err _ ->
+                    ( { model
+                        | budgets = Nothing
+                        , errorMessage = Just """
+                            There was an unexpected error connecting to YNAB.
+                        """
+                      }
+                    , Cmd.none
+                    )
 
 
 saveSession : Session -> Cmd msg
 saveSession session =
-    session
+    Debug.log "save session" session
         |> Session.encode
         |> Encode.encode 0
         |> Ports.saveSession
+
+
+
+-- COMMANDS
+
+
+loadScreenData : Model -> Cmd Msg
+loadScreenData model =
+    case (Debug.log "load screen" model.currentScreen) of
+        ChooseBudgetScreen ->
+            BudgetRequest.list model.apiUrl model.session.token
+                |> Http.send HandleBudgetsResponse
+
+        _ ->
+            Cmd.none
 
 
 
@@ -164,7 +216,11 @@ saveSession session =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Ports.onAccessTokenChange (\val -> UpdateAccessToken (Result.toMaybe (Decode.decodeValue AccessToken.decoder val)))
+    Ports.onAccessTokenChange
+        (Decode.decodeValue AccessToken.decoder
+            >> Result.toMaybe
+            >> UpdateAccessToken
+        )
 
 
 
@@ -255,9 +311,23 @@ loaderButton loadingLabel label isLoading attrs =
 viewScreen : (Model -> Html Msg) -> Model -> Html Msg
 viewScreen content model =
     div [ class "container" ]
-        [ content model
+        [ viewErrorAlert model.errorMessage
+        , content model
         , viewFooter model
         ]
+
+
+viewErrorAlert : Maybe String -> Html msg
+viewErrorAlert maybeErrorMessage =
+    case maybeErrorMessage of
+        Nothing ->
+            viewEmpty
+
+        Just errorMessage ->
+            div [ class "alert alert-danger" ]
+                [ strong [] [ text "Oh no! " ]
+                , text errorMessage
+                ]
 
 
 viewToolbar : Model -> Html Msg
@@ -267,6 +337,11 @@ viewToolbar model =
             [ li [ class "nav-item" ] [ button [ class "nav-link btn btn-link btn-sm", onClick Disconnect ] [ text "Disconnect" ] ]
             ]
         ]
+
+
+viewEmpty : Html msg
+viewEmpty =
+    span [ style [ ( "display", "none" ) ] ] []
 
 
 

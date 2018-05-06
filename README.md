@@ -12,6 +12,10 @@
 * debt details
 * debt payment categories
 * debt strategies
+  * [ ] highest interest rate first
+  * [ ] lowest interest rate first
+  * [ ] Balance/Min Payment Ratio
+  * [ ] Minimum Payment Only
 * debt strategy details
 * "start over" button
 

@@ -8,18 +8,19 @@ import "./index.scss";
 
 type Dictionary = { [key: string]: string };
 
-const ACCESS_TOKEN_EXPIRES_STORAGE_KEY = "accessTokenExpiresAt";
+const EXPIRES_STORAGE_KEY = "accessTokenExpiresAt";
 const SESSION_STORAGE_KEY = "session";
 
 // helper functions
 
 function loadSession() {
-  const expiresAt = localStorage.getItem(ACCESS_TOKEN_EXPIRES_STORAGE_KEY);
+  const expiresAt = localStorage.getItem(EXPIRES_STORAGE_KEY);
   const session = localStorage.getItem(SESSION_STORAGE_KEY);
   if (session && expiresAt && moment(expiresAt).isAfter()) {
     return JSON.parse(session);
   }
 
+  localStorage.removeItem(EXPIRES_STORAGE_KEY);
   return null;
 }
 
@@ -59,7 +60,8 @@ if (urlHash) {
     const expiresAt = moment()
       .add(expires_in, "seconds")
       .toISOString();
-    localStorage.setItem(ACCESS_TOKEN_EXPIRES_STORAGE_KEY, expiresAt);
+    localStorage.setItem(EXPIRES_STORAGE_KEY, expiresAt);
+    console.log("sending token", access_token);
     app.ports.onAccessTokenChange.send(access_token);
   }
 
