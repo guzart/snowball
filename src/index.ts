@@ -61,9 +61,8 @@ if (urlHash) {
       .add(expires_in, "seconds")
       .toISOString();
     localStorage.setItem(EXPIRES_STORAGE_KEY, expiresAt);
-    console.log("sending token", access_token);
     app.ports.onAccessTokenChange.send(access_token);
   }
 
-  // window.location.hash = "";
+  window.location.hash = "";
 }

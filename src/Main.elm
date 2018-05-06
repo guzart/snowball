@@ -43,16 +43,15 @@ init val =
 
             Just apiUrl ->
                 let
-                    model =
-                        { modelInitialValue
-                            | apiUrl = apiUrl
-                            , session = session
-                            , currentScreen = screenFromSession session
-                        }
+                    ( newModel, newCmd ) =
+                        loadScreenData
+                            { modelInitialValue
+                                | apiUrl = apiUrl
+                                , session = session
+                                , currentScreen = screenFromSession session
+                            }
                 in
-                    ( model
-                    , Cmd.batch [ saveSession session, loadScreenData model ]
-                    )
+                    ( newModel, Cmd.batch [ saveSession session, newCmd ] )
 
 
 decodeApiUrlFromJson : Value -> Maybe String
@@ -80,6 +79,7 @@ type alias Model =
     { apiUrl : String
     , errorMessage : Maybe String
     , isRequestingAccessToken : Bool
+    , isLoadingScreenData : Bool
     , currentScreen : Screen
     , session : Session
     , budgets : Maybe (List Budget)
@@ -91,6 +91,7 @@ modelInitialValue =
     { apiUrl = ""
     , errorMessage = Nothing
     , isRequestingAccessToken = False
+    , isLoadingScreenData = False
     , currentScreen = WelcomeScreen
     , session = Session.empty
     , budgets = Nothing
@@ -150,10 +151,14 @@ update msg model =
                     model.session
                         |> Session.setToken maybeToken
 
-                newModel =
-                    { model | session = newSession, currentScreen = screenFromSession newSession }
+                ( newModel, newCmd ) =
+                    loadScreenData
+                        { model
+                            | session = newSession
+                            , currentScreen = screenFromSession newSession
+                        }
             in
-                ( newModel, Cmd.batch [ saveSession newSession, loadScreenData newModel ] )
+                ( newModel, Cmd.batch [ saveSession newSession, newCmd ] )
 
         Disconnect ->
             let
@@ -166,20 +171,22 @@ update msg model =
                 )
 
         SetCurrentScreen currentScreen ->
-            let
-                newModel =
-                    { model | currentScreen = currentScreen }
-            in
-                ( newModel, loadScreenData newModel )
+            loadScreenData { model | currentScreen = currentScreen }
 
         HandleBudgetsResponse result ->
             case result of
                 Ok budgets ->
-                    ( { model | budgets = Just budgets }, Cmd.none )
+                    ( { model
+                        | budgets = Just budgets
+                        , isLoadingScreenData = False
+                      }
+                    , Cmd.none
+                    )
 
                 Err _ ->
                     ( { model
                         | budgets = Nothing
+                        , isLoadingScreenData = False
                         , errorMessage = Just """
                             There was an unexpected error connecting to YNAB.
                         """
@@ -190,25 +197,23 @@ update msg model =
 
 saveSession : Session -> Cmd msg
 saveSession session =
-    Debug.log "save session" session
+    session
         |> Session.encode
         |> Encode.encode 0
         |> Ports.saveSession
 
 
-
--- COMMANDS
-
-
-loadScreenData : Model -> Cmd Msg
+loadScreenData : Model -> ( Model, Cmd Msg )
 loadScreenData model =
-    case (Debug.log "load screen" model.currentScreen) of
+    case model.currentScreen of
         ChooseBudgetScreen ->
-            BudgetRequest.list model.apiUrl model.session.token
+            ( { model | isLoadingScreenData = True }
+            , BudgetRequest.list model.apiUrl model.session.token
                 |> Http.send HandleBudgetsResponse
+            )
 
         _ ->
-            Cmd.none
+            ( model, Cmd.none )
 
 
 
