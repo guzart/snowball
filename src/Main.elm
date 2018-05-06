@@ -143,6 +143,7 @@ update msg model =
             , Ports.requestAccessToken ()
             )
 
+        -- Logic here and init is very similar. Needs to be generalized
         UpdateAccessToken maybeToken ->
             let
                 newSession =
@@ -152,7 +153,7 @@ update msg model =
                 newModel =
                     { model | session = newSession, currentScreen = screenFromSession newSession }
             in
-                ( newModel, saveSession newSession )
+                ( newModel, Cmd.batch [ saveSession newSession, loadScreenData newModel ] )
 
         Disconnect ->
             let
