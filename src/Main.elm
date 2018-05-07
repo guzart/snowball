@@ -336,11 +336,15 @@ viewDebtDetailsContent model =
         -- Is disabeld if form has error messages
         isNextDisabled =
             False
+
+        accounts =
+            Maybe.withDefault [] model.session.accounts
     in
         section [ class "o-debt-details" ]
             [ header [ class "text-center" ] [ h1 [] [ text "Debt Details" ] ]
             , section [ class "py-4" ]
-                [ div [ class "d-flex mt-4" ]
+                [ div [] (accounts |> List.map (viewDebtDetailCard model))
+                , div [ class "d-flex mt-4" ]
                     [ button
                         [ class "btn btn-outline-dark mr-auto"
                         , onClick GoToChooseAccounts
@@ -355,6 +359,48 @@ viewDebtDetailsContent model =
                     ]
                 ]
             ]
+
+
+viewDebtDetailCard : Model -> Account -> Html Msg
+viewDebtDetailCard model account =
+    div [ class "card shadow-sm my-3" ]
+        [ div [ class "card-body" ]
+            [ div [ class "card-title d-flex" ]
+                [ div
+                    [ class "mr-auto" ]
+                    [ h5 [ class "my-0" ] [ text account.name ]
+                    , small [ class "text-muted text-uppercase" ] [ text account.accountType ]
+                    ]
+                , div [ class "font-weight-bold" ] [ text (toCurrency account.balance) ]
+                ]
+            , div []
+                [ Html.form []
+                    [ div [ class "form-group row text-danger" ]
+                        [ label [ class "col-sm-8 col-form-label", for ("rate-" ++ account.id) ]
+                            [ text "Interest Rate"
+                            ]
+                        , div [ class "col-sm-4 input-group" ]
+                            [ input [ class "form-control text-right border-danger", id ("rate-" ++ account.id), type_ "number", Html.Attributes.min "0", step "0.1" ] []
+                            , div [ class "input-group-append border-danger" ]
+                                [ span [ class "input-group-text text-light border-danger bg-danger" ] [ text "%" ]
+                                ]
+                            ]
+                        , small [ class "form-text font-weight-bold pl-3" ]
+                            [ text "Need an interest rate to calculate your payment strategies." ]
+                        ]
+                    , div [ class "form-group row" ]
+                        [ label [ class "col-sm-7 col-form-label", for ("min-payment-" ++ account.id) ] [ text "Minimum Payment" ]
+                        , div [ class "col-sm-5 input-group" ]
+                            [ div [ class "input-group-prepend" ]
+                                [ span [ class "input-group-text" ] [ text "$" ]
+                                ]
+                            , input [ class "form-control text-right", id ("min-payment-" ++ account.id), type_ "number", Html.Attributes.min "0", step "10" ] []
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
 
 
 viewChooseAccounts : Model -> Html Msg

@@ -1,5 +1,5 @@
 import fontawesome from "@fortawesome/fontawesome";
 import { faSnowflake } from "@fortawesome/fontawesome-free-regular";
-// import { faSnowflake } from "@fortawesome/fontawesome-free-solid";
+import { faInfo } from "@fortawesome/fontawesome-free-solid";
 
-fontawesome.library.add(faSnowflake);
+fontawesome.library.add(faSnowflake, faInfo);
