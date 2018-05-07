@@ -1,4 +1,4 @@
-module Data.Session exposing (Session, decoder, empty, encode, setToken)
+module Data.Session exposing (Session, decoder, empty, encode, setBudget, setToken)
 
 import Data.AccessToken as AccessToken exposing (AccessToken(..))
 import Data.Account as Account exposing (Account)
@@ -28,6 +28,11 @@ empty =
 setToken : Maybe AccessToken -> Session -> Session
 setToken token session =
     { session | token = token }
+
+
+setBudget : Maybe Budget -> Session -> Session
+setBudget budget session =
+    { session | budget = budget }
 
 
 

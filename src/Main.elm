@@ -132,8 +132,9 @@ type Msg
     = RequestAccessToken
     | UpdateAccessToken (Maybe AccessToken)
     | Disconnect
-    | SetCurrentScreen Screen
     | HandleBudgetsResponse (Result Http.Error (List Budget))
+    | SelectBudget (Maybe Budget)
+    | GoToChooseAccounts
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -144,7 +145,7 @@ update msg model =
             , Ports.requestAccessToken ()
             )
 
-        -- Logic here and init is very similar. Needs to be generalized
+        -- Logic here and init is very similar. May be generalized
         UpdateAccessToken maybeToken ->
             let
                 newSession =
@@ -170,9 +171,6 @@ update msg model =
                 , saveSession newSession
                 )
 
-        SetCurrentScreen currentScreen ->
-            loadScreenData { model | currentScreen = currentScreen }
-
         HandleBudgetsResponse result ->
             case result of
                 Ok budgets ->
@@ -193,6 +191,25 @@ update msg model =
                       }
                     , Cmd.none
                     )
+
+        SelectBudget maybeBudget ->
+            ( { model | session = model.session |> Session.setBudget maybeBudget }, Cmd.none )
+
+        GoToChooseAccounts ->
+            let
+                hasBudget =
+                    model.session.budget /= Nothing
+
+                nextScreen =
+                    if hasBudget then
+                        ChooseAccountsScreen
+                    else
+                        model.currentScreen
+
+                ( newModel, newCmd ) =
+                    loadScreenData { model | currentScreen = nextScreen }
+            in
+                ( newModel, Cmd.batch [ saveSession model.session, newCmd ] )
 
 
 saveSession : Session -> Cmd msg
@@ -253,12 +270,58 @@ viewChooseBudget model =
 
 viewChooseBudgetContent : Model -> Html Msg
 viewChooseBudgetContent model =
-    section [ class "o-choose-budget" ]
-        [ viewToolbar model
-        , header [ class "text-center" ]
-            [ h1 [] [ text "Choose a Budget" ]
+    let
+        isNextDisabled =
+            model.session.budget == Nothing
+
+        content =
+            loadingContent
+                "Loading budgets..."
+                (div [ class "fade-in" ]
+                    [ (viewBudgetList model.budgets model.session.budget)
+                    , div [ class "d-flex mt-4" ]
+                        [ button [ class "btn btn-outline-dark mr-auto", disabled True ] [ text "Back" ]
+                        , button
+                            [ class "btn"
+                            , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
+                            , disabled isNextDisabled
+                            , onClick GoToChooseAccounts
+                            ]
+                            [ text "Next Step" ]
+                        ]
+                    ]
+                )
+                model.isLoadingScreenData
+    in
+        section [ class "o-choose-budget" ]
+            [ viewToolbar model
+            , header [ class "text-center" ] [ h1 [] [ text "Choose a Budget" ] ]
+            , section [ class "py-4" ] [ content ]
             ]
-        ]
+
+
+viewBudgetList : Maybe (List Budget) -> Maybe Budget -> Html Msg
+viewBudgetList maybeBudgets selectedBudget =
+    case maybeBudgets of
+        Nothing ->
+            p [ class "text-center" ] [ text "No budgets" ]
+
+        Just budgets ->
+            div [ class "list-group" ]
+                (List.map
+                    (\budget ->
+                        div
+                            [ class "list-group-item"
+                            , classList [ ( "selected", budget.id == Maybe.withDefault "" (Maybe.map .id selectedBudget) ) ]
+                            , onClick (SelectBudget (Just budget))
+                            ]
+                            [ h5 [ class "mb-0" ] [ text budget.name ]
+                            , small [ class "text-muted font-weight-light" ]
+                                [ text ("Last updated on " ++ (Maybe.withDefault "" budget.lastModifiedOn)) ]
+                            ]
+                    )
+                    budgets
+                )
 
 
 viewWelcome : Model -> Html Msg
@@ -293,25 +356,16 @@ viewErrorContent : Model -> Html Msg
 viewErrorContent model =
     section [ class "o-error-content" ]
         [ header [ class "text-center" ]
-            [ h1 [ class "display-3" ] [ text "&ldquo;Unlike some politicians," ]
-            , h2 [ class "display-4" ]
-                [ text "I can admin to a mistake."
-                , small [] [ text "– Nelson Mandela" ]
+            [ h1
+                [ class "display-4"
+                , property "innerHTML" (Encode.string """
+                    &ldquo;Unlike some politicians, I can admin to a mistake.
+                    <small>– Nelson Mandela</small>
+                """)
                 ]
+                []
             ]
         ]
-
-
-loaderButton : String -> String -> Bool -> List (Html.Attribute msg) -> Html msg
-loaderButton loadingLabel label isLoading attrs =
-    button (List.concat [ attrs, [ disabled isLoading ] ])
-        (if isLoading then
-            [ span [ class "far fa-snowflake fa-spin" ] []
-            , text (" " ++ loadingLabel)
-            ]
-         else
-            [ text label ]
-        )
 
 
 viewScreen : (Model -> Html Msg) -> Model -> Html Msg
@@ -348,6 +402,34 @@ viewToolbar model =
 viewEmpty : Html msg
 viewEmpty =
     span [ style [ ( "display", "none" ) ] ] []
+
+
+loaderButton : String -> String -> Bool -> List (Html.Attribute msg) -> Html msg
+loaderButton loadingLabel label isLoading attrs =
+    button (List.concat [ attrs, [ disabled isLoading ] ])
+        (if isLoading then
+            [ span [ class "far fa-snowflake fa-spin" ] []
+            , text (" " ++ loadingLabel)
+            ]
+         else
+            [ text label ]
+        )
+
+
+loadingContent : String -> Html msg -> Bool -> Html msg
+loadingContent label content isLoading =
+    if isLoading then
+        loadingMessage label
+    else
+        content
+
+
+loadingMessage : String -> Html msg
+loadingMessage label =
+    div [ class "text-center text-info" ]
+        [ p [ class "d-block" ] [ i [ class "far fa-snowflake fa-spin fa-2x" ] [] ]
+        , p [ class "font-weight-light" ] [ text label ]
+        ]
 
 
 

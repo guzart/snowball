@@ -1,6 +1,6 @@
 {
     meta: {
-        createdAt: "2018-05-06T06:57:53.486Z",
+        createdAt: "2018-05-07T00:11:08.245Z",
         host: "https://api.youneedabudget.com/v1",
         resHumanReadable: true
     },
@@ -9,6 +9,8 @@
         method: "OPTIONS",
         headers: {
             connection: "keep-alive",
+            pragma: "no-cache",
+            "cache-control": "no-cache",
             "access-control-request-method": "GET",
             origin: "https://snowball.guzart.com:8080",
             "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36",
@@ -26,7 +28,7 @@
                 "Cowboy"
             ],
             date: [
-                "Sun, 06 May 2018 06:57:58 GMT"
+                "Mon, 07 May 2018 00:11:11 GMT"
             ],
             connection: [
                 "keep-alive"

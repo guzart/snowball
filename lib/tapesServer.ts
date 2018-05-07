@@ -13,6 +13,7 @@ const server = talkback({
     "etag",
     "if-none-match",
     "x-rate-limit",
+    "x-request-id",
     "x-runtime"
   ]
 });
