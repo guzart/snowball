@@ -3,7 +3,7 @@ module Request.Budget exposing (list)
 import Data.AccessToken exposing (AccessToken, withAuthorization)
 import Data.Budget as Budget exposing (Budget)
 import Http
-import HttpBuilder exposing (RequestBuilder, withBody, withExpect, withQueryParams)
+import HttpBuilder exposing (withExpect)
 import Json.Decode as Decode
 
 

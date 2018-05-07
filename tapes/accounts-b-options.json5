@@ -1,0 +1,85 @@
+{
+    meta: {
+        createdAt: "2018-05-07T03:20:04.975Z",
+        host: "https://api.youneedabudget.com/v1",
+        resHumanReadable: true
+    },
+    req: {
+        url: "/budgets/2a33261d-a1ae-4dff-820d-c57202e65cd5/accounts",
+        method: "OPTIONS",
+        headers: {
+            connection: "keep-alive",
+            "access-control-request-method": "GET",
+            origin: "https://snowball.guzart.com:8080",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36",
+            "access-control-request-headers": "authorization",
+            accept: "*/*",
+            "accept-encoding": "gzip, deflate, br",
+            "accept-language": "en,es;q=0.9,en-US;q=0.8,es-419;q=0.7"
+        },
+        body: ""
+    },
+    res: {
+        status: 200,
+        headers: {
+            server: [
+                "Cowboy"
+            ],
+            date: [
+                "Mon, 07 May 2018 03:20:05 GMT"
+            ],
+            connection: [
+                "keep-alive"
+            ],
+            "content-type": [
+                "text/plain"
+            ],
+            "access-control-allow-origin": [
+                "https://snowball.guzart.com:8080"
+            ],
+            "access-control-allow-methods": [
+                "GET, POST, PUT, OPTIONS"
+            ],
+            "access-control-max-age": [
+                "1728000"
+            ],
+            "access-control-allow-credentials": [
+                "true"
+            ],
+            "access-control-allow-headers": [
+                "authorization"
+            ],
+            "strict-transport-security": [
+                "max-age=631152000; includeSubdomains"
+            ],
+            "content-security-policy": [
+                "default-src 'self' ; block-all-mixed-content; child-src djtflbt20bdde.cloudfront.net player.vimeo.com api.recurly.com share.intercom.io ; connect-src 'self' *.helpscoutdocs.com api.ipify.org secure.helpscout.net d3hb14vkzrxvla.cloudfront.net beaconapi.helpscout.net wss://ws-helpscout.pusher.com api.recurly.com wss://*.intercom.io *.intercom.io uploads.intercomcdn.com uploads.intercomusercontent.com api.rollbar.com ; font-src https://evergreen-production-youneedabudgetco.netdna-ssl.com 'self' data: fonts.gstatic.com js.intercomcdn.com; img-src 'self' data: d33v4339jhl8k0.cloudfront.net *.gravatar.com js.intercomcdn.com static.intercomassets.com uploads.intercomcdn.com uploads.intercomusercontent.com https://evergreen-production-youneedabudgetco.netdna-ssl.com sslcdn-youneedabudgetco.netdna-ssl.com googleads.g.doubleclick.net stats.g.doubleclick.net www.googleadservices.com www.google-analytics.com www.facebook.com www.google.com www.google.ca www.google.co.uk www.google.de www.google.cz www.google.com.au www.google.com.br www.google.ie www.google.it www.google.cl online.swagger.io ; manifest-src 'self' sslcdn-youneedabudgetco.netdna-ssl.com; media-src 'self' *.intercomcdn.com ; object-src djtflbt20bdde.cloudfront.net; script-src https://evergreen-production-youneedabudgetco.netdna-ssl.com 'self' app.intercom.io widget.intercom.io js.intercomcdn.com ajax.aspnetcdn.com ajax.googleapis.com d37gvrvc0wt4s1.cloudfront.net djtflbt20bdde.cloudfront.net beacon-v2.helpscout.net stats.pusher.com js.recurly.com www.google-analytics.com www.googleadservices.com connect.facebook.net code.jquery.com ; style-src https://evergreen-production-youneedabudgetco.netdna-ssl.com 'self' 'unsafe-inline' djtflbt20bdde.cloudfront.net fonts.googleapis.com fonts.gstatic.com ynab-evergreen-production.s3.amazonaws.com "
+            ],
+            "referrer-policy": [
+                "origin-when-cross-origin"
+            ],
+            "x-content-type-options": [
+                "nosniff"
+            ],
+            "x-download-options": [
+                "noopen"
+            ],
+            "x-frame-options": [
+                "DENY"
+            ],
+            "x-permitted-cross-domain-policies": [
+                "none"
+            ],
+            "x-xss-protection": [
+                "1; mode=block"
+            ],
+            "transfer-encoding": [
+                "chunked"
+            ],
+            via: [
+                "1.1 vegur"
+            ]
+        },
+        body: ""
+    }
+}

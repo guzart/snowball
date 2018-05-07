@@ -27,6 +27,8 @@
 * [ ] test that session is decoded correctly
 * [ ] handle session decode error
 * [ ] handle api url decode error
+* [ ] use budget number formatting
+* [ ] use budget date formatting
 
 ### Bling, bling! ✨🥇
 

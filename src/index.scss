@@ -48,34 +48,57 @@ $enable-shadows: true;
   }
 }
 
-@mixin selected-item {
-  box-shadow: 0 0 2rem rgba($black, 0.15);
-  transform: scale(1.01);
-  transition: transform 0.2s, box-shadow 0.6s;
-  z-index: 2;
-}
-
-.o-choose-budget {
-  section {
-    margin: auto;
-    max-width: 30rem;
-  }
-
+@mixin list-group-selectable {
   .list-group-item {
     cursor: default;
 
     &.selected {
-      @include selected-item;
+      border-left: solid 4px $primary;
+      box-shadow: 0 0 0.5rem rgba($black, 0.15);
+      transform: scale(1.02);
+      transition: transform 0.2s ease, box-shadow 0.6s ease;
+      z-index: 2;
+
+      + .selected:before {
+        box-shadow: 0 0 8px rgba($black, 0.15) inset;
+        content: " ";
+        height: 2px;
+        width: 100%;
+        position: absolute;
+        top: -1px;
+        left: 0;
+      }
 
       &:hover {
         border-color: $border-color;
-        background-color: inherit;
+        border-left: solid 4px $primary;
+        background-color: $white;
+        z-index: 2;
       }
     }
 
     &:hover {
       background-color: $gray-200;
+      transition: background-color 0.2s ease;
     }
+  }
+}
+
+.o-choose-budget {
+  @include list-group-selectable;
+
+  section {
+    margin: auto;
+    max-width: 30rem;
+  }
+}
+
+.o-choose-accounts {
+  @include list-group-selectable;
+
+  section {
+    margin: auto;
+    max-width: 30rem;
   }
 }
 

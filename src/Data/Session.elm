@@ -1,4 +1,4 @@
-module Data.Session exposing (Session, decoder, empty, encode, setBudget, setToken)
+module Data.Session exposing (Session, decoder, empty, encode, setBudget, setToken, toggleAccount)
 
 import Data.AccessToken as AccessToken exposing (AccessToken(..))
 import Data.Account as Account exposing (Account)
@@ -33,6 +33,26 @@ setToken token session =
 setBudget : Maybe Budget -> Session -> Session
 setBudget budget session =
     { session | budget = budget }
+
+
+toggleAccount : Account -> Session -> Session
+toggleAccount account session =
+    case session.accounts of
+        Nothing ->
+            { session | accounts = Just [ account ] }
+
+        Just sessionAccounts ->
+            let
+                isSelected =
+                    sessionAccounts |> List.filter (\a -> a.id == account.id) |> List.isEmpty |> not
+
+                nextAccounts =
+                    if isSelected then
+                        sessionAccounts |> List.filter (\a -> a.id /= account.id)
+                    else
+                        sessionAccounts ++ [ account ]
+            in
+                { session | accounts = Just nextAccounts }
 
 
 

@@ -9,9 +9,11 @@ const server = talkback({
   port,
   ignoreHeaders: [
     "authorization",
+    "cache-control",
     "date",
     "etag",
     "if-none-match",
+    "pragma",
     "x-rate-limit",
     "x-request-id",
     "x-runtime"

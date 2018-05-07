@@ -1,6 +1,7 @@
 module Main exposing (Model, Msg, update, view, subscriptions, init)
 
 import Data.AccessToken as AccessToken exposing (AccessToken(..), decoder)
+import Data.Account exposing (Account)
 import Data.Budget exposing (Budget)
 import Data.Session as Session exposing (Session)
 import Html exposing (..)
@@ -10,6 +11,8 @@ import Http
 import Json.Encode as Encode
 import Json.Decode as Decode exposing (Value)
 import Ports
+import Regex
+import Request.Account as AccountRequest
 import Request.Budget as BudgetRequest
 import Views.Assets exposing (assets)
 import Views.Modal as Modal
@@ -83,6 +86,7 @@ type alias Model =
     , currentScreen : Screen
     , session : Session
     , budgets : Maybe (List Budget)
+    , accounts : Maybe (List Account)
     }
 
 
@@ -95,6 +99,7 @@ modelInitialValue =
     , currentScreen = WelcomeScreen
     , session = Session.empty
     , budgets = Nothing
+    , accounts = Nothing
     }
 
 
@@ -121,7 +126,12 @@ screenFromSession session =
                     ChooseBudgetScreen
 
                 Just _ ->
-                    ChooseAccountsScreen
+                    case session.accounts of
+                        Nothing ->
+                            ChooseAccountsScreen
+
+                        Just _ ->
+                            DebtDetailsScreen
 
 
 
@@ -133,7 +143,10 @@ type Msg
     | UpdateAccessToken (Maybe AccessToken)
     | Disconnect
     | HandleBudgetsResponse (Result Http.Error (List Budget))
+    | HandleAccountsResponse (Result Http.Error (List Account))
     | SelectBudget (Maybe Budget)
+    | ToggleAccount Account
+    | GoToChooseBudget
     | GoToChooseAccounts
 
 
@@ -185,15 +198,38 @@ update msg model =
                     ( { model
                         | budgets = Nothing
                         , isLoadingScreenData = False
-                        , errorMessage = Just """
-                            There was an unexpected error connecting to YNAB.
-                        """
+                        , errorMessage = defaultErrorMessage
+                      }
+                    , Cmd.none
+                    )
+
+        HandleAccountsResponse result ->
+            case result of
+                Ok accounts ->
+                    ( { model
+                        | accounts = Just accounts
+                        , isLoadingScreenData = False
+                      }
+                    , Cmd.none
+                    )
+
+                Err _ ->
+                    ( { model
+                        | accounts = Nothing
+                        , isLoadingScreenData = False
+                        , errorMessage = defaultErrorMessage
                       }
                     , Cmd.none
                     )
 
         SelectBudget maybeBudget ->
             ( { model | session = model.session |> Session.setBudget maybeBudget }, Cmd.none )
+
+        ToggleAccount account ->
+            ( { model | session = model.session |> Session.toggleAccount account }, Cmd.none )
+
+        GoToChooseBudget ->
+            loadScreenData { model | currentScreen = ChooseBudgetScreen }
 
         GoToChooseAccounts ->
             let
@@ -229,8 +265,24 @@ loadScreenData model =
                 |> Http.send HandleBudgetsResponse
             )
 
+        ChooseAccountsScreen ->
+            case model.session.budget of
+                Nothing ->
+                    ( { model | errorMessage = Just "Something went wrong, we couldn't find your selected budget." }, Cmd.none )
+
+                Just budget ->
+                    ( { model | isLoadingScreenData = True }
+                    , AccountRequest.list model.apiUrl model.session.token budget
+                        |> Http.send HandleAccountsResponse
+                    )
+
         _ ->
             ( model, Cmd.none )
+
+
+defaultErrorMessage : Maybe String
+defaultErrorMessage =
+    Just "There was an unexpected error connecting to YNAB."
 
 
 
@@ -259,8 +311,125 @@ view model =
         ChooseBudgetScreen ->
             viewChooseBudget model
 
+        ChooseAccountsScreen ->
+            viewChooseAccounts model
+
         _ ->
             viewError model
+
+
+viewChooseAccounts : Model -> Html Msg
+viewChooseAccounts model =
+    viewScreen viewChooseAccountsContent model
+
+
+viewChooseAccountsContent : Model -> Html Msg
+viewChooseAccountsContent model =
+    let
+        isNextDisabled =
+            Maybe.withDefault [] model.session.accounts
+                |> List.isEmpty
+
+        content =
+            loadingContent
+                "Loading accounts..."
+                (div [ class "fade-in" ]
+                    [ (viewAccountsList model.accounts model.session.accounts)
+                    , div [ class "d-flex mt-4" ]
+                        [ button
+                            [ class "btn btn-outline-dark mr-auto"
+                            , onClick GoToChooseBudget
+                            ]
+                            [ text "Back" ]
+                        , button
+                            [ class "btn"
+                            , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
+                            , disabled isNextDisabled
+                            ]
+                            [ text "Next Step" ]
+                        ]
+                    ]
+                )
+                model.isLoadingScreenData
+    in
+        section [ class "o-choose-accounts" ]
+            [ viewToolbar model
+            , header [ class "text-center" ] [ h1 [] [ text "Choose Debt Accounts" ] ]
+            , section [ class "py-4" ] [ content ]
+            ]
+
+
+viewAccountsList : Maybe (List Account) -> Maybe (List Account) -> Html Msg
+viewAccountsList maybeAccounts maybeSelectedAccounts =
+    case maybeAccounts of
+        Nothing ->
+            p [ class "text-center" ] [ text "No accounts in the budget." ]
+
+        Just accounts ->
+            div [ class "list-group" ]
+                (List.map
+                    (\account ->
+                        div
+                            [ class "list-group-item d-flex"
+                            , classList [ ( "selected", isAccountSelected maybeSelectedAccounts account ) ]
+                            , onClick (ToggleAccount account)
+                            ]
+                            [ div [ class "mr-auto" ]
+                                [ h5 [ class "mb-0" ] [ text account.name ]
+                                , small [ class "text-uppercase text-muted font-weight-light" ]
+                                    [ text account.accountType ]
+                                ]
+                            , div
+                                [ class "align-self-center"
+                                , classList
+                                    [ ( "text-danger", account.balance < 0 )
+                                    , ( "font-weight-bold", account.balance < 0 )
+                                    ]
+                                ]
+                                [ text (toCurrency account.balance) ]
+                            ]
+                    )
+                    accounts
+                )
+
+
+isAccountSelected : Maybe (List Account) -> Account -> Bool
+isAccountSelected maybeAccounts account =
+    case maybeAccounts of
+        Nothing ->
+            False
+
+        Just accounts ->
+            accounts |> List.filter (\a -> a.id == account.id) |> List.isEmpty |> not
+
+
+toCurrency : Int -> String
+toCurrency amount =
+    let
+        cents =
+            toString (rem amount 1000)
+
+        centsFormatted =
+            if (String.length cents) == 1 then
+                "0" ++ cents
+            else
+                cents
+
+        dollarsFormatted =
+            (toString (abs (amount // 1000)))
+                |> String.reverse
+                |> Regex.find Regex.All (Regex.regex "\\d\\d\\d|\\d\\d|\\d")
+                |> List.reverse
+                |> List.map (.match >> String.reverse)
+                |> String.join ","
+
+        negativeSymbol =
+            if amount < 0 then
+                "-"
+            else
+                ""
+    in
+        negativeSymbol ++ "$" ++ dollarsFormatted ++ "." ++ centsFormatted
 
 
 viewChooseBudget : Model -> Html Msg
