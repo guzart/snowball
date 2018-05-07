@@ -4,6 +4,7 @@
 
 * calculate current screen from model
 * load budgets if not available - fire when setting the screen?
+* extract action footer to function
 
 ### Alpha Release
 
@@ -29,6 +30,7 @@
 * [ ] handle api url decode error
 * [ ] use budget number formatting
 * [ ] use budget date formatting
+* [ ] move temporary selections out of session – bug when back and forward session is saved
 
 ### Bling, bling! ✨🥇
 

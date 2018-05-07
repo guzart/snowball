@@ -148,6 +148,7 @@ type Msg
     | ToggleAccount Account
     | GoToChooseBudget
     | GoToChooseAccounts
+    | GoToDebtDetails
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -247,6 +248,9 @@ update msg model =
             in
                 ( newModel, Cmd.batch [ saveSession model.session, newCmd ] )
 
+        GoToDebtDetails ->
+            ( { model | currentScreen = DebtDetailsScreen }, Cmd.none )
+
 
 saveSession : Session -> Cmd msg
 saveSession session =
@@ -314,8 +318,43 @@ view model =
         ChooseAccountsScreen ->
             viewChooseAccounts model
 
+        DebtDetailsScreen ->
+            viewDebtDetails model
+
         _ ->
             viewError model
+
+
+viewDebtDetails : Model -> Html Msg
+viewDebtDetails model =
+    viewScreen viewDebtDetailsContent model
+
+
+viewDebtDetailsContent : Model -> Html Msg
+viewDebtDetailsContent model =
+    let
+        -- Is disabeld if form has error messages
+        isNextDisabled =
+            False
+    in
+        section [ class "o-debt-details" ]
+            [ header [ class "text-center" ] [ h1 [] [ text "Debt Details" ] ]
+            , section [ class "py-4" ]
+                [ div [ class "d-flex mt-4" ]
+                    [ button
+                        [ class "btn btn-outline-dark mr-auto"
+                        , onClick GoToChooseAccounts
+                        ]
+                        [ text "Back" ]
+                    , button
+                        [ class "btn"
+                        , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
+                        , disabled isNextDisabled
+                        ]
+                        [ text "Next Step" ]
+                    ]
+                ]
+            ]
 
 
 viewChooseAccounts : Model -> Html Msg
@@ -333,7 +372,7 @@ viewChooseAccountsContent model =
         content =
             loadingContent
                 "Loading accounts..."
-                (div [ class "fade-in" ]
+                (div []
                     [ (viewAccountsList model.accounts model.session.accounts)
                     , div [ class "d-flex mt-4" ]
                         [ button
@@ -345,6 +384,7 @@ viewChooseAccountsContent model =
                             [ class "btn"
                             , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
                             , disabled isNextDisabled
+                            , onClick GoToDebtDetails
                             ]
                             [ text "Next Step" ]
                         ]
@@ -353,8 +393,7 @@ viewChooseAccountsContent model =
                 model.isLoadingScreenData
     in
         section [ class "o-choose-accounts" ]
-            [ viewToolbar model
-            , header [ class "text-center" ] [ h1 [] [ text "Choose Debt Accounts" ] ]
+            [ header [ class "text-center" ] [ h1 [] [ text "Choose Debt Accounts" ] ]
             , section [ class "py-4" ] [ content ]
             ]
 
@@ -446,11 +485,10 @@ viewChooseBudgetContent model =
         content =
             loadingContent
                 "Loading budgets..."
-                (div [ class "fade-in" ]
+                (div []
                     [ (viewBudgetList model.budgets model.session.budget)
-                    , div [ class "d-flex mt-4" ]
-                        [ button [ class "btn btn-outline-dark mr-auto", disabled True ] [ text "Back" ]
-                        , button
+                    , div [ class "d-flex justify-content-end mt-4" ]
+                        [ button
                             [ class "btn"
                             , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
                             , disabled isNextDisabled
@@ -463,8 +501,7 @@ viewChooseBudgetContent model =
                 model.isLoadingScreenData
     in
         section [ class "o-choose-budget" ]
-            [ viewToolbar model
-            , header [ class "text-center" ] [ h1 [] [ text "Choose a Budget" ] ]
+            [ header [ class "text-center" ] [ h1 [] [ text "Choose a Budget" ] ]
             , section [ class "py-4" ] [ content ]
             ]
 
@@ -541,6 +578,7 @@ viewScreen : (Model -> Html Msg) -> Model -> Html Msg
 viewScreen content model =
     div [ class "container" ]
         [ viewErrorAlert model.errorMessage
+        , viewToolbar model
         , content model
         , viewFooter model
         ]
@@ -561,11 +599,16 @@ viewErrorAlert maybeErrorMessage =
 
 viewToolbar : Model -> Html Msg
 viewToolbar model =
-    div []
-        [ ul [ class "nav justify-content-end" ]
-            [ li [ class "nav-item" ] [ button [ class "nav-link btn btn-link btn-sm", onClick Disconnect ] [ text "Disconnect" ] ]
-            ]
-        ]
+    case model.session.budget of
+        Nothing ->
+            viewEmpty
+
+        Just _ ->
+            div []
+                [ ul [ class "nav justify-content-end" ]
+                    [ li [ class "nav-item" ] [ button [ class "nav-link btn btn-link btn-sm", onClick Disconnect ] [ text "Disconnect" ] ]
+                    ]
+                ]
 
 
 viewEmpty : Html msg
