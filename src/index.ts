@@ -8,7 +8,7 @@ import "./index.scss";
 
 type Dictionary = { [key: string]: string };
 
-const EXPIRES_STORAGE_KEY = "accessTokenExpiresAt";
+const EXPIRES_STORAGE_KEY = "tokenExpiresAt";
 const SESSION_STORAGE_KEY = "session";
 
 // helper functions
@@ -16,12 +16,17 @@ const SESSION_STORAGE_KEY = "session";
 function loadSession() {
   const expiresAt = localStorage.getItem(EXPIRES_STORAGE_KEY);
   const session = localStorage.getItem(SESSION_STORAGE_KEY);
-  if (session && expiresAt && moment(expiresAt).isAfter()) {
-    return JSON.parse(session);
+  if (!session || !expiresAt) {
+    return null;
   }
 
-  localStorage.removeItem(EXPIRES_STORAGE_KEY);
-  return null;
+  const isExpired = moment(expiresAt).isBefore();
+  const sessionData = JSON.parse(session);
+  if (isExpired) {
+    return Object.assign(sessionData, { token: null });
+  }
+
+  return sessionData;
 }
 
 // Initialize app
