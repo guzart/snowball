@@ -2,6 +2,7 @@
   "compilerOptions": {
     "module": "es6",
     "moduleResolution": "node",
+    "lib": ["dom", "es6", "dom.iterable", "scripthost", "es2017.object"],
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noUnusedLocals": true,

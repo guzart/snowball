@@ -11,11 +11,12 @@ import Http
 import Json.Encode as Encode
 import Json.Decode as Decode exposing (Value)
 import Ports
-import Regex
 import Request.Account as AccountRequest
 import Request.Budget as BudgetRequest
+import Screen.DebtDetails as DebtDetails
 import Views.Assets exposing (assets)
 import Views.Footer as Footer
+import Util exposing (toCurrency)
 
 
 -- INIT
@@ -37,6 +38,7 @@ init val =
         maybeApiUrl =
             decodeApiUrlFromJson val
 
+        -- TODO: If decoding fails, backup the session. It might need to be migrated.
         session =
             decodeSessionFromJson val
     in
@@ -87,6 +89,7 @@ type alias Model =
     , session : Session
     , budgets : Maybe (List Budget)
     , accounts : Maybe (List Account)
+    , debtDetails : DebtDetails.Model
     }
 
 
@@ -100,6 +103,7 @@ modelInitialValue =
     , session = Session.empty
     , budgets = Nothing
     , accounts = Nothing
+    , debtDetails = DebtDetails.initNew
     }
 
 
@@ -149,6 +153,7 @@ type Msg
     | GoToChooseBudget
     | GoToChooseAccounts
     | GoToDebtDetails
+    | DebtDetailsMsg DebtDetails.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -227,7 +232,20 @@ update msg model =
             ( { model | session = model.session |> Session.setBudget maybeBudget }, Cmd.none )
 
         ToggleAccount account ->
-            ( { model | session = model.session |> Session.toggleAccount account }, Cmd.none )
+            let
+                newSession =
+                    model.session
+                        |> Session.toggleAccount account
+                        |> Session.updateDebtDetails
+            in
+                ( { model | session = newSession }, Cmd.none )
+
+        DebtDetailsMsg subMsg ->
+            let
+                ( newDebtDetails, newDebtDetailsCmd ) =
+                    DebtDetails.update subMsg model.debtDetails
+            in
+                ( { model | debtDetails = newDebtDetails }, Cmd.map DebtDetailsMsg newDebtDetailsCmd )
 
         GoToChooseBudget ->
             loadScreenData { model | currentScreen = ChooseBudgetScreen }
@@ -246,10 +264,14 @@ update msg model =
                 ( newModel, newCmd ) =
                     loadScreenData { model | currentScreen = nextScreen }
             in
-                ( newModel, Cmd.batch [ saveSession model.session, newCmd ] )
+                ( newModel, Cmd.batch [ saveSession newModel.session, newCmd ] )
 
         GoToDebtDetails ->
-            ( { model | currentScreen = DebtDetailsScreen }, Cmd.none )
+            let
+                ( newModel, newCmd ) =
+                    loadScreenData { model | currentScreen = DebtDetailsScreen }
+            in
+                ( newModel, Cmd.batch [ saveSession newModel.session, newCmd ] )
 
 
 saveSession : Session -> Cmd msg
@@ -333,7 +355,7 @@ viewDebtDetails model =
 viewDebtDetailsContent : Model -> Html Msg
 viewDebtDetailsContent model =
     let
-        -- Is disabeld if form has error messages
+        -- Is disabled if form has error messages
         isNextDisabled =
             False
 
@@ -343,7 +365,7 @@ viewDebtDetailsContent model =
         section [ class "o-debt-details" ]
             [ header [ class "text-center" ] [ h1 [] [ text "Debt Details" ] ]
             , section [ class "py-4" ]
-                [ div [] (accounts |> List.map (viewDebtDetailCard model))
+                [ DebtDetails.view accounts model.debtDetails |> Html.map DebtDetailsMsg
                 , div [ class "d-flex mt-4" ]
                     [ button
                         [ class "btn btn-outline-dark mr-auto"
@@ -359,48 +381,6 @@ viewDebtDetailsContent model =
                     ]
                 ]
             ]
-
-
-viewDebtDetailCard : Model -> Account -> Html Msg
-viewDebtDetailCard model account =
-    div [ class "card shadow-sm my-3" ]
-        [ div [ class "card-body" ]
-            [ div [ class "card-title d-flex" ]
-                [ div
-                    [ class "mr-auto" ]
-                    [ h5 [ class "my-0" ] [ text account.name ]
-                    , small [ class "text-muted text-uppercase" ] [ text account.accountType ]
-                    ]
-                , div [ class "font-weight-bold" ] [ text (toCurrency account.balance) ]
-                ]
-            , div []
-                [ Html.form []
-                    [ div [ class "form-group row text-danger" ]
-                        [ label [ class "col-sm-8 col-form-label", for ("rate-" ++ account.id) ]
-                            [ text "Interest Rate"
-                            ]
-                        , div [ class "col-sm-4 input-group" ]
-                            [ input [ class "form-control text-right border-danger", id ("rate-" ++ account.id), type_ "number", Html.Attributes.min "0", step "0.1" ] []
-                            , div [ class "input-group-append border-danger" ]
-                                [ span [ class "input-group-text text-light border-danger bg-danger" ] [ text "%" ]
-                                ]
-                            ]
-                        , small [ class "form-text font-weight-bold pl-3" ]
-                            [ text "Need an interest rate to calculate your payment strategies." ]
-                        ]
-                    , div [ class "form-group row" ]
-                        [ label [ class "col-sm-7 col-form-label", for ("min-payment-" ++ account.id) ] [ text "Minimum Payment" ]
-                        , div [ class "col-sm-5 input-group" ]
-                            [ div [ class "input-group-prepend" ]
-                                [ span [ class "input-group-text" ] [ text "$" ]
-                                ]
-                            , input [ class "form-control text-right", id ("min-payment-" ++ account.id), type_ "number", Html.Attributes.min "0", step "10" ] []
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
 
 
 viewChooseAccounts : Model -> Html Msg
@@ -486,35 +466,6 @@ isAccountSelected maybeAccounts account =
 
         Just accounts ->
             accounts |> List.filter (\a -> a.id == account.id) |> List.isEmpty |> not
-
-
-toCurrency : Int -> String
-toCurrency amount =
-    let
-        cents =
-            toString (rem amount 1000)
-
-        centsFormatted =
-            if (String.length cents) == 1 then
-                "0" ++ cents
-            else
-                cents
-
-        dollarsFormatted =
-            (toString (abs (amount // 1000)))
-                |> String.reverse
-                |> Regex.find Regex.All (Regex.regex "\\d\\d\\d|\\d\\d|\\d")
-                |> List.reverse
-                |> List.map (.match >> String.reverse)
-                |> String.join ","
-
-        negativeSymbol =
-            if amount < 0 then
-                "-"
-            else
-                ""
-    in
-        negativeSymbol ++ "$" ++ dollarsFormatted ++ "." ++ centsFormatted
 
 
 viewChooseBudget : Model -> Html Msg
