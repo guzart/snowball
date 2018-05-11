@@ -1,6 +1,8 @@
-module Screen.DebtDetails exposing (ExternalMsg(..), Model, Msg, initNew, update, view)
+module Screen.DebtDetails exposing (ExternalMsg(..), Model, Msg, init, update, view)
 
 import Data.Account exposing (Account)
+import Data.DebtDetail exposing (DebtDetail)
+import Dict as Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
@@ -12,7 +14,7 @@ import Validate exposing (Validator, ifBlank, ifEmptyList, ifNotInt, validate)
 
 
 type alias Model =
-    List DetailEdit
+    Dict String DetailEdit
 
 
 type alias DetailEdit =
@@ -23,15 +25,28 @@ type alias DetailEdit =
     }
 
 
-initNew : Model
-initNew =
-    -- TODO: Initialize with values from session, i.e. DebtDetail
-    []
+init : Maybe (Dict String DebtDetail) -> Model
+init maybeDebtDetails =
+    case maybeDebtDetails of
+        Nothing ->
+            Dict.empty
+
+        Just debtDetails ->
+            Dict.map (\_ dd -> initFromDebtDetail dd) debtDetails
 
 
-initDetailEdit : Account -> DetailEdit
-initDetailEdit account =
-    { accountId = account.id
+initFromDebtDetail : DebtDetail -> DetailEdit
+initFromDebtDetail debtDetail =
+    { accountId = debtDetail.accountId
+    , errors = []
+    , rate = toString debtDetail.rate
+    , minPayment = toString debtDetail.minPayment
+    }
+
+
+initForAccount : String -> DetailEdit
+initForAccount accountId =
+    { accountId = accountId
     , errors = []
     , rate = ""
     , minPayment = ""
@@ -66,7 +81,7 @@ update msg model =
             model => Cmd.none => NoOp
 
         Submit ->
-            List.map (\de -> { de | errors = (validate detailEditValidator de) }) model
+            Dict.map validateDetailEdit model
                 => Cmd.none
                 => NoOp
 
@@ -77,11 +92,16 @@ update msg model =
             ( model, Cmd.none ) => GoNext
 
 
+validateDetailEdit : String -> DetailEdit -> DetailEdit
+validateDetailEdit _ detailEdit =
+    { detailEdit | errors = validate detailEditValidator detailEdit }
+
+
 findAccountDetailEdit : Account -> List DetailEdit -> DetailEdit
 findAccountDetailEdit account detailEdits =
     List.filter (\dd -> dd.accountId == account.id) detailEdits
         |> List.head
-        |> Maybe.withDefault (initDetailEdit account)
+        |> Maybe.withDefault (initForAccount account.id)
 
 
 
@@ -102,7 +122,7 @@ view maybeAccounts model =
                     ]
 
                 Just accounts ->
-                    List.map (\a -> viewDetailEdit (findAccountDetailEdit a model) a) accounts
+                    List.map (\a -> viewDetailEdit a (Dict.get a.id model)) accounts
     in
         section [ class "o-debt-details" ]
             [ header [ class "text-center" ] [ h1 [] [ text "Debt Details" ] ]
@@ -119,7 +139,7 @@ view maybeAccounts model =
                             [ class "btn"
                             , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
                             , disabled isNextDisabled
-                            , onClick Continue
+                            , onClick Submit
                             ]
                             [ text "Next Step" ]
                         ]
@@ -128,73 +148,115 @@ view maybeAccounts model =
             ]
 
 
-viewDetailEdit : DetailEdit -> Account -> Html Msg
-viewDetailEdit detailEdit account =
-    div [ class "card shadow-sm my-3" ]
-        [ div [ class "card-body" ]
-            [ div [ class "card-title d-flex" ]
-                [ div
-                    [ class "mr-auto" ]
-                    [ h5 [ class "my-0" ] [ text account.name ]
-                    , small [ class "text-muted text-uppercase" ] [ text account.accountType ]
+viewDetailEdit : Account -> Maybe DetailEdit -> Html Msg
+viewDetailEdit account maybeDetailEdit =
+    case maybeDetailEdit of
+        Nothing ->
+            viewEmpty
+
+        Just detailEdit ->
+            div [ class "card shadow-sm my-3" ]
+                [ div [ class "card-body" ]
+                    [ div [ class "card-title d-flex" ]
+                        [ div
+                            [ class "mr-auto" ]
+                            [ h5 [ class "my-0" ] [ text account.name ]
+                            , small [ class "text-muted text-uppercase" ] [ text account.accountType ]
+                            ]
+                        , div [ class "font-weight-bold" ] [ text (toCurrency account.balance) ]
+                        ]
+                    , div []
+                        [ Html.form []
+                            [ viewRateControl detailEdit
+                            , viewMinPaymentControl detailEdit
+                            ]
+                        ]
                     ]
-                , div [ class "font-weight-bold" ] [ text (toCurrency account.balance) ]
                 ]
-            , div []
-                [ Html.form []
-                    [ viewRateControl detailEdit
-                    , viewMinPaymentControl account
-                    ]
-                ]
-            ]
-        ]
 
 
 viewRateControl : DetailEdit -> Html Msg
 viewRateControl detailEdit =
-    div [ class "form-group row text-danger" ]
-        [ label [ class "col-sm-8 col-form-label", for ("rate-" ++ detailEdit.accountId) ]
-            [ text "Interest Rate"
-            ]
-        , div [ class "col-sm-4 input-group" ]
-            [ input
-                [ class "form-control text-right border-danger"
-                , id ("rate-" ++ detailEdit.accountId)
-                , type_ "number"
-                , Html.Attributes.min "0"
-                , step "0.1"
-                , onInput (SetRate detailEdit.accountId)
-                , defaultValue detailEdit.rate
+    let
+        errorMessage =
+            findErrorMessage Rate detailEdit.errors
+
+        hasError =
+            errorMessage /= Nothing
+
+        errorText =
+            case errorMessage of
+                Nothing ->
+                    viewEmpty
+
+                Just message ->
+                    span [ class "form-text font-weight-bold pl-3" ] [ text message ]
+    in
+        div [ class "form-group row", classList [ ( "text-danger", hasError ) ] ]
+            [ label [ class "col-sm-8 col-form-label", for ("rate-" ++ detailEdit.accountId) ]
+                [ text "Interest Rate"
                 ]
-                []
-            , div [ class "input-group-append border-danger" ]
-                [ span [ class "input-group-text text-light border-danger bg-danger" ] [ text "%" ]
+            , div [ class "col-sm-4 input-group" ]
+                [ input
+                    [ class "form-control text-right"
+                    , classList [ ( "border-danger", hasError ) ]
+                    , id ("rate-" ++ detailEdit.accountId)
+                    , type_ "number"
+                    , Html.Attributes.min "0"
+                    , step "0.1"
+                    , onInput (SetRate detailEdit.accountId)
+                    , defaultValue detailEdit.rate
+                    ]
+                    []
+                , div [ class "input-group-append" ]
+                    [ span [ class "input-group-text", classList [ ( "text-light border-danger bg-danger", hasError ) ] ] [ text "%" ]
+                    ]
                 ]
+            , errorText
             ]
-        , small [ class "form-text font-weight-bold pl-3" ]
-            [ text "Need an interest rate to calculate your payment strategies." ]
-        ]
 
 
-viewMinPaymentControl : Account -> Html Msg
-viewMinPaymentControl account =
-    div [ class "form-group row" ]
-        [ label [ class "col-sm-7 col-form-label", for ("min-payment-" ++ account.id) ] [ text "Minimum Payment" ]
-        , div [ class "col-sm-5 input-group" ]
-            [ div [ class "input-group-prepend" ]
-                [ span [ class "input-group-text" ] [ text "$" ]
+viewMinPaymentControl : DetailEdit -> Html Msg
+viewMinPaymentControl detailEdit =
+    let
+        errorMessage =
+            findErrorMessage Rate detailEdit.errors
+
+        hasError =
+            errorMessage /= Nothing
+
+        errorText =
+            case errorMessage of
+                Nothing ->
+                    span [ class "hidden" ] []
+
+                Just message ->
+                    span [ class "form-text font-weight-bold pl-3" ] [ text message ]
+    in
+        div [ class "form-group row", classList [ ( "text-danger", hasError ) ] ]
+            [ label [ class "col-sm-7 col-form-label", for ("min-payment-" ++ detailEdit.accountId) ] [ text "Minimum Payment" ]
+            , div [ class "col-sm-5 input-group" ]
+                [ div [ class "input-group-prepend" ]
+                    [ span [ class "input-group-text", classList [ ( "border-danger bg-danger text-light", hasError ) ] ] [ text "$" ]
+                    ]
+                , input
+                    [ class "form-control text-right"
+                    , classList [ ( "border-danger", hasError ) ]
+                    , id ("min-payment-" ++ detailEdit.accountId)
+                    , type_ "number"
+                    , Html.Attributes.min "0"
+                    , step "10"
+                    , onInput (SetMinPayment detailEdit.accountId)
+                    , defaultValue detailEdit.rate
+                    ]
+                    []
                 ]
-            , input
-                [ class "form-control text-right"
-                , id ("min-payment-" ++ account.id)
-                , type_ "number"
-                , Html.Attributes.min "0"
-                , step "10"
-                , onInput (SetMinPayment account.id)
-                ]
-                []
             ]
-        ]
+
+
+viewEmpty : Html msg
+viewEmpty =
+    span [ style [ ( "display", "none" ) ] ] []
 
 
 
@@ -223,6 +285,13 @@ detailEditValidator =
             , ifNotInt .minPayment (\_ -> (Rate => "Minimum payment must be a number."))
             ]
         ]
+
+
+findErrorMessage : Field -> List Error -> Maybe String
+findErrorMessage field errors =
+    List.filter (\( f, _ ) -> f == field) errors
+        |> List.head
+        |> Maybe.map Tuple.second
 
 
 

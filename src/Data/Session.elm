@@ -4,6 +4,7 @@ import Data.AccessToken as AccessToken exposing (AccessToken(..))
 import Data.Account as Account exposing (Account)
 import Data.Budget as Budget exposing (Budget)
 import Data.DebtDetail as DebtDetail exposing (DebtDetail)
+import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (decode, required)
 import Json.Encode as Encode exposing (Value)
@@ -15,7 +16,7 @@ type alias Session =
     { token : Maybe AccessToken
     , budget : Maybe Budget
     , accounts : Maybe (List Account)
-    , debtDetails : Maybe (List DebtDetail)
+    , debtDetails : Maybe (Dict String DebtDetail)
     }
 
 
@@ -67,21 +68,21 @@ updateDebtDetails session =
         Just accounts ->
             let
                 newDebtDetails =
-                    (List.map (findOrInitDebtDetail session.debtDetails) accounts)
+                    accounts
+                        |> List.map (\a -> ( a.id, findOrInitDebtDetail session.debtDetails a ))
+                        |> Dict.fromList
             in
                 { session | debtDetails = Just newDebtDetails }
 
 
-findOrInitDebtDetail : Maybe (List DebtDetail) -> Account -> DebtDetail
+findOrInitDebtDetail : Maybe (Dict String DebtDetail) -> Account -> DebtDetail
 findOrInitDebtDetail maybeDebtDetails account =
     case maybeDebtDetails of
         Nothing ->
-            DebtDetail.init account
+            DebtDetail.init account.id
 
         Just debtDetails ->
-            List.filter (\dd -> dd.accountId == account.id) debtDetails
-                |> List.head
-                |> Maybe.withDefault (DebtDetail.init account)
+            Maybe.withDefault (DebtDetail.init account.id) (Dict.get account.id debtDetails)
 
 
 
@@ -94,7 +95,7 @@ decoder =
         |> required "token" (Decode.maybe AccessToken.decoder)
         |> required "budget" (Decode.maybe Budget.decoder)
         |> required "accounts" (Decode.maybe (Decode.list Account.decoder))
-        |> required "debtDetails" (Decode.maybe (Decode.list DebtDetail.decoder))
+        |> required "debtDetails" (Decode.maybe (Decode.dict DebtDetail.decoder))
 
 
 encode : Session -> Value
@@ -103,7 +104,7 @@ encode session =
         [ "token" => EncodeExtra.maybe AccessToken.encode session.token
         , "budget" => EncodeExtra.maybe Budget.encode session.budget
         , "accounts" => EncodeExtra.maybe (\accounts -> Encode.list (List.map Account.encode accounts)) session.accounts
-        , "debtDetails" => EncodeExtra.maybe (\debtDetails -> Encode.list (List.map DebtDetail.encode debtDetails)) session.debtDetails
+        , "debtDetails" => EncodeExtra.maybe (\debtDetails -> Encode.object (List.map (Tuple.mapSecond DebtDetail.encode) (Dict.toList debtDetails))) session.debtDetails
         ]
 
 

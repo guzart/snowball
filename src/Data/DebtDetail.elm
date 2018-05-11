@@ -1,6 +1,5 @@
 module Data.DebtDetail exposing (DebtDetail, decoder, encode, init)
 
-import Data.Account exposing (Account)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (decode, required)
 import Json.Encode as Encode exposing (Value)
@@ -14,9 +13,9 @@ type alias DebtDetail =
     }
 
 
-init : Account -> DebtDetail
-init account =
-    { accountId = account.id
+init : String -> DebtDetail
+init accountId =
+    { accountId = accountId
     , rate = 0
     , minPayment = 0
     }

@@ -54,6 +54,7 @@ init val =
                                 | apiUrl = apiUrl
                                 , session = session
                                 , currentScreen = screenFromSession session
+                                , debtDetails = DebtDetails.init session.debtDetails
                             }
                 in
                     ( newModel, Cmd.batch [ saveSession session, newCmd ] )
@@ -103,7 +104,7 @@ modelInitialValue =
     , session = Session.empty
     , budgets = Nothing
     , accounts = Nothing
-    , debtDetails = DebtDetails.initNew
+    , debtDetails = DebtDetails.init Nothing
     }
 
 

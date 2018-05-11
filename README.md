@@ -22,6 +22,7 @@
 
 ### Beta Release
 
+* [ ] Use types for accountId, budgetId, etc
 * [ ] create category modal
 * [ ] button to purge localStorage
 * [ ] postcss with auto prefixer
@@ -34,6 +35,7 @@
 
 ### Bling, bling! ✨🥇
 
+* [ ] preserve order of accounts
 * [ ] customize bootstrap style
 * [ ] update debt payment category balance from snowball
 * [ ] animate screen transitions
