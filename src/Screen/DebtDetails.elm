@@ -1,9 +1,9 @@
-module Screen.DebtDetails exposing (Model, Msg, initNew, update, view)
+module Screen.DebtDetails exposing (ExternalMsg(..), Model, Msg, initNew, update, view)
 
 import Data.Account exposing (Account)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput, onSubmit)
 import Util exposing ((=>), toCurrency)
 import Validate exposing (Validator, ifBlank, ifEmptyList, ifNotInt, validate)
 
@@ -39,15 +39,93 @@ initDetailEdit account =
 
 
 
+-- UPDATE
+
+
+type Msg
+    = SetRate String String
+    | SetMinPayment String String
+    | Submit
+    | Back
+    | Continue
+
+
+type ExternalMsg
+    = NoOp
+    | GoBack
+    | GoNext
+
+
+update : Msg -> Model -> ( ( Model, Cmd Msg ), ExternalMsg )
+update msg model =
+    case msg of
+        SetRate accountId rate ->
+            model => Cmd.none => NoOp
+
+        SetMinPayment accountId minPayment ->
+            model => Cmd.none => NoOp
+
+        Submit ->
+            List.map (\de -> { de | errors = (validate detailEditValidator de) }) model
+                => Cmd.none
+                => NoOp
+
+        Back ->
+            ( model, Cmd.none ) => GoBack
+
+        Continue ->
+            ( model, Cmd.none ) => GoNext
+
+
+findAccountDetailEdit : Account -> List DetailEdit -> DetailEdit
+findAccountDetailEdit account detailEdits =
+    List.filter (\dd -> dd.accountId == account.id) detailEdits
+        |> List.head
+        |> Maybe.withDefault (initDetailEdit account)
+
+
+
 -- VIEW --
 
 
-view : List Account -> Model -> Html Msg
-view accounts model =
-    div []
-        (accounts
-            |> List.map (\a -> viewDetailEdit (findAccountDetailEdit a model) a)
-        )
+view : Maybe (List Account) -> Model -> Html Msg
+view maybeAccounts model =
+    let
+        isNextDisabled =
+            maybeAccounts == Nothing
+
+        content =
+            case maybeAccounts of
+                Nothing ->
+                    [ p [ class "alert alert-info" ]
+                        [ text "Go back to select the debt accounts you want to create a payment strategy for." ]
+                    ]
+
+                Just accounts ->
+                    List.map (\a -> viewDetailEdit (findAccountDetailEdit a model) a) accounts
+    in
+        section [ class "o-debt-details" ]
+            [ header [ class "text-center" ] [ h1 [] [ text "Debt Details" ] ]
+            , section [ class "py-4" ]
+                [ Html.form [ onSubmit Submit ]
+                    [ div [] content
+                    , div [ class "d-flex mt-4" ]
+                        [ button
+                            [ class "btn btn-outline-dark mr-auto"
+                            , onClick Back
+                            ]
+                            [ text "Back" ]
+                        , button
+                            [ class "btn"
+                            , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
+                            , disabled isNextDisabled
+                            , onClick Continue
+                            ]
+                            [ text "Next Step" ]
+                        ]
+                    ]
+                ]
+            ]
 
 
 viewDetailEdit : DetailEdit -> Account -> Html Msg
@@ -120,41 +198,6 @@ viewMinPaymentControl account =
 
 
 
--- UPDATE
-
-
-type Msg
-    = Save
-    | SetRate String String
-    | SetMinPayment String String
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        Save ->
-            case validate modelValidator model of
-                [] ->
-                    model => Cmd.none
-
-                errors ->
-                    model => Cmd.none
-
-        SetRate accountId rate ->
-            model => Cmd.none
-
-        SetMinPayment accountId minPayment ->
-            model => Cmd.none
-
-
-findAccountDetailEdit : Account -> List DetailEdit -> DetailEdit
-findAccountDetailEdit account detailEdits =
-    List.filter (\dd -> dd.accountId == account.id) detailEdits
-        |> List.head
-        |> Maybe.withDefault (initDetailEdit account)
-
-
-
 -- VALIDATION --
 
 
@@ -166,13 +209,6 @@ type Field
 
 type alias Error =
     ( Field, String )
-
-
-modelValidator : Validator Error Model
-modelValidator =
-    Validate.all
-        [ ifEmptyList identity (Form => "")
-        ]
 
 
 detailEditValidator : Validator Error DetailEdit
@@ -187,3 +223,8 @@ detailEditValidator =
             , ifNotInt .minPayment (\_ -> (Rate => "Minimum payment must be a number."))
             ]
         ]
+
+
+
+-- https://github.com/rtfeldman/elm-spa-example/blob/master/src/Page/Article/Editor.elm
+-- http://package.elm-lang.org/packages/rtfeldman/elm-validate/3.0.0/Validate

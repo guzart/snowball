@@ -16,7 +16,7 @@ import Request.Budget as BudgetRequest
 import Screen.DebtDetails as DebtDetails
 import Views.Assets exposing (assets)
 import Views.Footer as Footer
-import Util exposing (toCurrency)
+import Util exposing ((=>), toCurrency)
 
 
 -- INIT
@@ -150,10 +150,12 @@ type Msg
     | HandleAccountsResponse (Result Http.Error (List Account))
     | SelectBudget (Maybe Budget)
     | ToggleAccount Account
+    | DebtDetailsMsg DebtDetails.Msg
     | GoToChooseBudget
     | GoToChooseAccounts
     | GoToDebtDetails
-    | DebtDetailsMsg DebtDetails.Msg
+    | GoToPaymentStrategies
+    | GoToPaymentStrategy
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -238,25 +240,36 @@ update msg model =
                         |> Session.toggleAccount account
                         |> Session.updateDebtDetails
             in
-                ( { model | session = newSession }, Cmd.none )
+                { model | session = newSession } => Cmd.none
 
         DebtDetailsMsg subMsg ->
             let
-                ( newDebtDetails, newDebtDetailsCmd ) =
+                ( ( screenModel, screenCmd ), msgFromScreen ) =
                     DebtDetails.update subMsg model.debtDetails
+
+                modelScreenMsg =
+                    case msgFromScreen of
+                        DebtDetails.NoOp ->
+                            model
+
+                        DebtDetails.GoBack ->
+                            { model | currentScreen = ChooseAccountsScreen }
+
+                        DebtDetails.GoNext ->
+                            { model | currentScreen = PaymentCategoryScreen }
+
+                ( newModel, newCmd ) =
+                    loadScreenData { modelScreenMsg | debtDetails = screenModel }
             in
-                ( { model | debtDetails = newDebtDetails }, Cmd.map DebtDetailsMsg newDebtDetailsCmd )
+                newModel => Cmd.batch [ Cmd.map DebtDetailsMsg screenCmd, newCmd ]
 
         GoToChooseBudget ->
             loadScreenData { model | currentScreen = ChooseBudgetScreen }
 
         GoToChooseAccounts ->
             let
-                hasBudget =
-                    model.session.budget /= Nothing
-
                 nextScreen =
-                    if hasBudget then
+                    if model.session.budget /= Nothing then
                         ChooseAccountsScreen
                     else
                         model.currentScreen
@@ -272,6 +285,12 @@ update msg model =
                     loadScreenData { model | currentScreen = DebtDetailsScreen }
             in
                 ( newModel, Cmd.batch [ saveSession newModel.session, newCmd ] )
+
+        GoToPaymentStrategies ->
+            ( model, Cmd.none )
+
+        GoToPaymentStrategy ->
+            ( model, Cmd.none )
 
 
 saveSession : Session -> Cmd msg
@@ -354,33 +373,8 @@ viewDebtDetails model =
 
 viewDebtDetailsContent : Model -> Html Msg
 viewDebtDetailsContent model =
-    let
-        -- Is disabled if form has error messages
-        isNextDisabled =
-            False
-
-        accounts =
-            Maybe.withDefault [] model.session.accounts
-    in
-        section [ class "o-debt-details" ]
-            [ header [ class "text-center" ] [ h1 [] [ text "Debt Details" ] ]
-            , section [ class "py-4" ]
-                [ DebtDetails.view accounts model.debtDetails |> Html.map DebtDetailsMsg
-                , div [ class "d-flex mt-4" ]
-                    [ button
-                        [ class "btn btn-outline-dark mr-auto"
-                        , onClick GoToChooseAccounts
-                        ]
-                        [ text "Back" ]
-                    , button
-                        [ class "btn"
-                        , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
-                        , disabled isNextDisabled
-                        ]
-                        [ text "Next Step" ]
-                    ]
-                ]
-            ]
+    DebtDetails.view model.session.accounts model.debtDetails
+        |> Html.map DebtDetailsMsg
 
 
 viewChooseAccounts : Model -> Html Msg
