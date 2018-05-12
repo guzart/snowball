@@ -7,7 +7,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Util exposing ((=>), toCurrency)
-import Validate exposing (Validator, ifBlank, ifEmptyList, ifNotInt, validate)
+import Validate exposing (Validator, ifBlank, ifEmptyList, ifNotInt, ifTrue, validate)
 
 
 -- MODEL
@@ -75,10 +75,14 @@ update : Msg -> Model -> ( ( Model, Cmd Msg ), ExternalMsg )
 update msg model =
     case msg of
         SetRate accountId rate ->
-            model => Cmd.none => NoOp
+            Dict.update accountId (Maybe.map (\a -> { a | rate = rate })) model
+                => Cmd.none
+                => NoOp
 
         SetMinPayment accountId minPayment ->
-            model => Cmd.none => NoOp
+            Dict.update accountId (Maybe.map (\a -> { a | minPayment = minPayment })) model
+                => Cmd.none
+                => NoOp
 
         Submit ->
             Dict.map validateDetailEdit model
@@ -193,16 +197,17 @@ viewRateControl detailEdit =
                     span [ class "form-text font-weight-bold pl-3" ] [ text message ]
     in
         div [ class "form-group row", classList [ ( "text-danger", hasError ) ] ]
-            [ label [ class "col-sm-8 col-form-label", for ("rate-" ++ detailEdit.accountId) ]
+            [ label [ class "col-sm-7 col-form-label", for ("rate-" ++ detailEdit.accountId) ]
                 [ text "Interest Rate"
                 ]
-            , div [ class "col-sm-4 input-group" ]
+            , div [ class "col-sm-5 input-group" ]
                 [ input
                     [ class "form-control text-right"
                     , classList [ ( "border-danger", hasError ) ]
                     , id ("rate-" ++ detailEdit.accountId)
                     , type_ "number"
                     , Html.Attributes.min "0"
+                    , Html.Attributes.max "100"
                     , step "0.1"
                     , onInput (SetRate detailEdit.accountId)
                     , defaultValue detailEdit.rate
@@ -247,7 +252,7 @@ viewMinPaymentControl detailEdit =
                     , Html.Attributes.min "0"
                     , step "10"
                     , onInput (SetMinPayment detailEdit.accountId)
-                    , defaultValue detailEdit.rate
+                    , defaultValue detailEdit.minPayment
                     ]
                     []
                 ]
@@ -279,12 +284,33 @@ detailEditValidator =
         [ Validate.firstError
             [ ifBlank .rate (Rate => "Need an interest rate to calculate your payment strategies.")
             , ifNotInt .rate (\_ -> (Rate => "Interest rate must be a number."))
+            , ifLessThan 0 .rate (Rate => "Must be a positive number.")
             ]
         , Validate.firstError
             [ ifBlank .minPayment (MinPayment => "Need a minimum payment to calculate your payment strategies.")
             , ifNotInt .minPayment (\_ -> (Rate => "Minimum payment must be a number."))
+            , ifLessThan 0 .minPayment (MinPayment => "Must be a positive number.")
             ]
         ]
+
+
+ifLessThan : Int -> (subject -> String) -> Error -> Validator Error subject
+ifLessThan number extractor error =
+    ifTrue
+        (\s ->
+            (let
+                value =
+                    extractor s |> String.toInt |> Result.toMaybe
+             in
+                case value of
+                    Nothing ->
+                        True
+
+                    Just num ->
+                        number < number
+            )
+        )
+        error
 
 
 findErrorMessage : Field -> List Error -> Maybe String

@@ -5,6 +5,7 @@
 * calculate current screen from model
 * load budgets if not available - fire when setting the screen?
 * extract action footer to function
+* add reset button to error screen
 
 ### Alpha Release
 
