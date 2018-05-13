@@ -14,7 +14,9 @@ import Validate exposing (Validator, ifBlank, ifEmptyList, ifNotInt, ifTrue, val
 
 
 type alias Model =
-    Dict String DetailEdit
+    { showErrors : Bool
+    , detailEdits : Dict String DetailEdit
+    }
 
 
 type alias DetailEdit =
@@ -27,23 +29,31 @@ type alias DetailEdit =
 
 init : Maybe (Dict String DebtDetail) -> Model
 init maybeDebtDetails =
-    case maybeDebtDetails of
-        Nothing ->
-            Dict.empty
+    let
+        detailEdits =
+            case maybeDebtDetails of
+                Nothing ->
+                    Dict.empty
 
-        Just debtDetails ->
-            Dict.map (\_ dd -> initFromDebtDetail dd) debtDetails
+                Just debtDetails ->
+                    Dict.map (\_ dd -> initFromDebtDetail dd) debtDetails
+    in
+        { showErrors = False, detailEdits = detailEdits }
 
 
 initFromAccounts : Maybe (List Account) -> Model
 initFromAccounts maybeAccounts =
-    case maybeAccounts of
-        Nothing ->
-            Dict.empty
+    let
+        detailEdits =
+            case maybeAccounts of
+                Nothing ->
+                    Dict.empty
 
-        Just accounts ->
-            List.map (\a -> ( a.id, initForAccount a.id )) accounts
-                |> Dict.fromList
+                Just accounts ->
+                    List.map (\a -> ( a.id, initForAccount a.id )) accounts
+                        |> Dict.fromList
+    in
+        { showErrors = False, detailEdits = detailEdits }
 
 
 initFromDebtDetail : DebtDetail -> DetailEdit
@@ -71,7 +81,6 @@ initForAccount accountId =
 type Msg
     = SetRate String String
     | SetMinPayment String String
-    | Submit
     | Back
     | Continue
 
@@ -86,25 +95,39 @@ update : Msg -> Model -> ( ( Model, Cmd Msg ), ExternalMsg )
 update msg model =
     case msg of
         SetRate accountId rate ->
-            Dict.update accountId (Maybe.map (\a -> { a | rate = rate })) model
-                => Cmd.none
-                => NoOp
+            let
+                newDetailEdits =
+                    Dict.update accountId (Maybe.map (\a -> { a | rate = rate })) model.detailEdits
+                        |> Dict.map validateDetailEdit
+            in
+                { model | detailEdits = newDetailEdits }
+                    => Cmd.none
+                    => NoOp
 
         SetMinPayment accountId minPayment ->
-            Dict.update accountId (Maybe.map (\a -> { a | minPayment = minPayment })) model
-                => Cmd.none
-                => NoOp
-
-        Submit ->
-            Dict.map validateDetailEdit model
-                => Cmd.none
-                => NoOp
+            let
+                newDetailEdits =
+                    Dict.update accountId (Maybe.map (\a -> { a | minPayment = minPayment })) model.detailEdits
+                        |> Dict.map validateDetailEdit
+            in
+                { model | detailEdits = newDetailEdits }
+                    => Cmd.none
+                    => NoOp
 
         Back ->
             ( model, Cmd.none ) => GoBack
 
         Continue ->
-            ( model, Cmd.none ) => GoNext
+            let
+                newDetailEdits =
+                    Dict.map validateDetailEdit model.detailEdits
+
+                newModel =
+                    { model | detailEdits = newDetailEdits, showErrors = True }
+            in
+                newModel
+                    => Cmd.none
+                    => NoOp
 
 
 validateDetailEdit : String -> DetailEdit -> DetailEdit
@@ -137,12 +160,12 @@ view maybeAccounts model =
                     ]
 
                 Just accounts ->
-                    List.map (\a -> viewDetailEdit a (Dict.get a.id model)) accounts
+                    List.map (\a -> viewDetailEdit a (Dict.get a.id model.detailEdits)) accounts
     in
         section [ class "o-debt-details" ]
             [ header [ class "text-center" ] [ h1 [] [ text "Debt Details" ] ]
             , section [ class "py-4" ]
-                [ Html.form [ onSubmit Submit ]
+                [ Html.form [ onSubmit Continue ]
                     [ div [] content
                     , div [ class "d-flex mt-4" ]
                         [ button
@@ -154,7 +177,7 @@ view maybeAccounts model =
                             [ class "btn"
                             , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
                             , disabled isNextDisabled
-                            , onClick Submit
+                            , onClick Continue
                             ]
                             [ text "Next Step" ]
                         ]
@@ -205,7 +228,7 @@ viewRateControl detailEdit =
                     viewEmpty
 
                 Just message ->
-                    span [ class "form-text font-weight-bold pl-3" ] [ text message ]
+                    viewErrorMessage message
     in
         div [ class "form-group row", classList [ ( "text-danger", hasError ) ] ]
             [ label [ class "col-sm-7 col-form-label", for ("rate-" ++ detailEdit.accountId) ]
@@ -236,7 +259,7 @@ viewMinPaymentControl : DetailEdit -> Html Msg
 viewMinPaymentControl detailEdit =
     let
         errorMessage =
-            findErrorMessage Rate detailEdit.errors
+            findErrorMessage MinPayment detailEdit.errors
 
         hasError =
             errorMessage /= Nothing
@@ -244,10 +267,10 @@ viewMinPaymentControl detailEdit =
         errorText =
             case errorMessage of
                 Nothing ->
-                    span [ class "hidden" ] []
+                    viewEmpty
 
                 Just message ->
-                    span [ class "form-text font-weight-bold pl-3" ] [ text message ]
+                    viewErrorMessage message
     in
         div [ class "form-group row", classList [ ( "text-danger", hasError ) ] ]
             [ label [ class "col-sm-7 col-form-label", for ("min-payment-" ++ detailEdit.accountId) ] [ text "Minimum Payment" ]
@@ -267,7 +290,13 @@ viewMinPaymentControl detailEdit =
                     ]
                     []
                 ]
+            , errorText
             ]
+
+
+viewErrorMessage : String -> Html msg
+viewErrorMessage message =
+    small [ class "form-text font-weight-bold pl-3" ] [ text message ]
 
 
 viewEmpty : Html msg
@@ -295,30 +324,30 @@ detailEditValidator =
         [ Validate.firstError
             [ ifBlank .rate (Rate => "Need an interest rate to calculate your payment strategies.")
             , ifNotInt .rate (\_ -> (Rate => "Interest rate must be a number."))
-            , ifLessThan 0 .rate (Rate => "Must be a positive number.")
+            , ifLessThan 0 .rate (Rate => "Must be a number greater than or equal to zero.")
             ]
         , Validate.firstError
             [ ifBlank .minPayment (MinPayment => "Need a minimum payment to calculate your payment strategies.")
-            , ifNotInt .minPayment (\_ -> (Rate => "Minimum payment must be a number."))
-            , ifLessThan 0 .minPayment (MinPayment => "Must be a positive number.")
+            , ifNotInt .minPayment (\_ -> (MinPayment => "Minimum payment must be a number."))
+            , ifLessThan 0 .minPayment (MinPayment => "Must be a number greater than or equal to zero.")
             ]
         ]
 
 
 ifLessThan : Int -> (subject -> String) -> Error -> Validator Error subject
-ifLessThan number extractor error =
+ifLessThan number lens error =
     ifTrue
         (\s ->
             (let
-                value =
-                    extractor s |> String.toInt |> Result.toMaybe
+                result =
+                    lens s |> String.toInt |> Result.toMaybe
              in
-                case value of
+                case result of
                     Nothing ->
                         True
 
-                    Just num ->
-                        number < number
+                    Just value ->
+                        value < number
             )
         )
         error
