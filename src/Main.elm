@@ -232,16 +232,10 @@ update msg model =
                     )
 
         SelectBudget maybeBudget ->
-            ( { model | session = model.session |> Session.setBudget maybeBudget }, Cmd.none )
+            ( { model | session = Session.setBudget maybeBudget model.session }, Cmd.none )
 
         ToggleAccount account ->
-            let
-                newSession =
-                    model.session
-                        |> Session.toggleAccount account
-                        |> Session.updateDebtDetails
-            in
-                { model | session = newSession } => Cmd.none
+            { model | session = Session.toggleAccount account model.session } => Cmd.none
 
         DebtDetailsMsg subMsg ->
             let
@@ -268,22 +262,25 @@ update msg model =
             loadScreenData { model | currentScreen = ChooseBudgetScreen }
 
         GoToChooseAccounts ->
-            let
-                nextScreen =
-                    if model.session.budget /= Nothing then
-                        ChooseAccountsScreen
-                    else
-                        model.currentScreen
+            case model.session.budget of
+                Nothing ->
+                    model => Cmd.none
 
-                ( newModel, newCmd ) =
-                    loadScreenData { model | currentScreen = nextScreen }
-            in
-                ( newModel, Cmd.batch [ saveSession newModel.session, newCmd ] )
+                Just budget ->
+                    let
+                        ( newModel, newCmd ) =
+                            loadScreenData { model | currentScreen = ChooseAccountsScreen }
+                    in
+                        ( newModel, Cmd.batch [ saveSession newModel.session, newCmd ] )
 
         GoToDebtDetails ->
             let
                 ( newModel, newCmd ) =
-                    loadScreenData { model | currentScreen = DebtDetailsScreen }
+                    loadScreenData
+                        { model
+                            | debtDetails = DebtDetails.initFromAccounts model.accounts
+                            , currentScreen = DebtDetailsScreen
+                        }
             in
                 ( newModel, Cmd.batch [ saveSession newModel.session, newCmd ] )
 

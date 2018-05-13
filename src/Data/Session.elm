@@ -36,27 +36,39 @@ setToken token session =
 
 setBudget : Maybe Budget -> Session -> Session
 setBudget budget session =
-    { session | budget = budget }
+    { session | budget = budget, accounts = Nothing, debtDetails = Nothing }
 
 
 toggleAccount : Account -> Session -> Session
 toggleAccount account session =
     case session.accounts of
         Nothing ->
-            { session | accounts = Just [ account ] }
+            { session | accounts = Just [ account ], debtDetails = Nothing }
 
         Just sessionAccounts ->
             let
                 isSelected =
-                    sessionAccounts |> List.filter (\a -> a.id == account.id) |> List.isEmpty |> not
+                    sessionAccounts
+                        |> List.filter (\a -> a.id == account.id)
+                        |> List.isEmpty
+                        |> not
 
                 nextAccounts =
                     if isSelected then
                         sessionAccounts |> List.filter (\a -> a.id /= account.id)
                     else
                         sessionAccounts ++ [ account ]
+
+                debtDetails =
+                    Maybe.withDefault Dict.empty session.debtDetails
+
+                nextDebtDetails =
+                    nextAccounts
+                        |> List.map
+                            (\a -> ( a.id, Maybe.withDefault (DebtDetail.init a.id) (Dict.get a.id debtDetails) ))
+                        |> Dict.fromList
             in
-                { session | accounts = Just nextAccounts }
+                { session | accounts = Just nextAccounts, debtDetails = Just nextDebtDetails }
 
 
 updateDebtDetails : Session -> Session

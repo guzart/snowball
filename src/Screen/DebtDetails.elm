@@ -1,4 +1,4 @@
-module Screen.DebtDetails exposing (ExternalMsg(..), Model, Msg, init, update, view)
+module Screen.DebtDetails exposing (ExternalMsg(..), Model, Msg, init, initFromAccounts, update, view)
 
 import Data.Account exposing (Account)
 import Data.DebtDetail exposing (DebtDetail)
@@ -33,6 +33,17 @@ init maybeDebtDetails =
 
         Just debtDetails ->
             Dict.map (\_ dd -> initFromDebtDetail dd) debtDetails
+
+
+initFromAccounts : Maybe (List Account) -> Model
+initFromAccounts maybeAccounts =
+    case maybeAccounts of
+        Nothing ->
+            Dict.empty
+
+        Just accounts ->
+            List.map (\a -> ( a.id, initForAccount a.id )) accounts
+                |> Dict.fromList
 
 
 initFromDebtDetail : DebtDetail -> DetailEdit
@@ -101,11 +112,11 @@ validateDetailEdit _ detailEdit =
     { detailEdit | errors = validate detailEditValidator detailEdit }
 
 
-findAccountDetailEdit : Account -> List DetailEdit -> DetailEdit
-findAccountDetailEdit account detailEdits =
-    List.filter (\dd -> dd.accountId == account.id) detailEdits
+findAccountDetailEdit : String -> List DetailEdit -> DetailEdit
+findAccountDetailEdit accountId detailEdits =
+    List.filter (\dd -> dd.accountId == accountId) detailEdits
         |> List.head
-        |> Maybe.withDefault (initForAccount account.id)
+        |> Maybe.withDefault (initForAccount accountId)
 
 
 
