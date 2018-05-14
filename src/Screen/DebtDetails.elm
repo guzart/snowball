@@ -124,10 +124,21 @@ update msg model =
 
                 newModel =
                     { model | detailEdits = newDetailEdits, showErrors = True }
+
+                hasErrors =
+                    Dict.values newModel.detailEdits
+                        |> List.map (.errors >> List.length)
+                        |> List.any (\s -> s > 0)
+
+                newExternalMsg =
+                    if hasErrors then
+                        NoOp
+                    else
+                        GoNext
             in
                 newModel
                     => Cmd.none
-                    => NoOp
+                    => newExternalMsg
 
 
 validateDetailEdit : String -> DetailEdit -> DetailEdit
@@ -149,9 +160,6 @@ findAccountDetailEdit accountId detailEdits =
 view : Maybe (List Account) -> Model -> Html Msg
 view maybeAccounts model =
     let
-        isNextDisabled =
-            maybeAccounts == Nothing
-
         content =
             case maybeAccounts of
                 Nothing ->
@@ -174,9 +182,7 @@ view maybeAccounts model =
                             ]
                             [ text "Back" ]
                         , button
-                            [ class "btn"
-                            , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
-                            , disabled isNextDisabled
+                            [ class "btn btn-primary"
                             , onClick Continue
                             ]
                             [ text "Next Step" ]
@@ -323,31 +329,38 @@ detailEditValidator =
     Validate.all
         [ Validate.firstError
             [ ifBlank .rate (Rate => "Need an interest rate to calculate your payment strategies.")
-            , ifNotInt .rate (\_ -> (Rate => "Interest rate must be a number."))
+            , ifNotFloat .rate (Rate => "Interest rate must be a number.")
             , ifLessThan 0 .rate (Rate => "Must be a number greater than or equal to zero.")
             ]
         , Validate.firstError
             [ ifBlank .minPayment (MinPayment => "Need a minimum payment to calculate your payment strategies.")
-            , ifNotInt .minPayment (\_ -> (MinPayment => "Minimum payment must be a number."))
+            , ifNotFloat .minPayment (MinPayment => "Minimum payment must be a number.")
             , ifLessThan 0 .minPayment (MinPayment => "Must be a number greater than or equal to zero.")
             ]
         ]
 
 
+ifNotFloat : (subject -> String) -> Error -> Validator Error subject
+ifNotFloat subjectToString error =
+    ifTrue
+        (\s -> (subjectToString s |> String.toFloat |> Result.toMaybe) == Nothing)
+        error
+
+
 ifLessThan : Int -> (subject -> String) -> Error -> Validator Error subject
-ifLessThan number lens error =
+ifLessThan number subjectToString error =
     ifTrue
         (\s ->
             (let
                 result =
-                    lens s |> String.toInt |> Result.toMaybe
+                    subjectToString s |> String.toFloat |> Result.toMaybe
              in
                 case result of
                     Nothing ->
                         True
 
                     Just value ->
-                        value < number
+                        value < (toFloat number)
             )
         )
         error

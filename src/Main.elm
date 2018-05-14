@@ -251,12 +251,13 @@ update msg model =
                             { model | currentScreen = ChooseAccountsScreen }
 
                         DebtDetails.GoNext ->
+                            -- TODO: update session debtDetails from DebtDetail.detailEdits
                             { model | currentScreen = PaymentCategoryScreen }
 
                 ( newModel, newCmd ) =
                     loadScreenData { modelScreenMsg | debtDetails = screenModel }
             in
-                newModel => Cmd.batch [ Cmd.map DebtDetailsMsg screenCmd, newCmd ]
+                newModel => Cmd.batch [ Cmd.map DebtDetailsMsg screenCmd ]
 
         GoToChooseBudget ->
             loadScreenData { model | currentScreen = ChooseBudgetScreen }
