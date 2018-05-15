@@ -178,12 +178,13 @@ view maybeAccounts model =
                     , div [ class "d-flex mt-4" ]
                         [ button
                             [ class "btn btn-outline-dark mr-auto"
+                            , type_ "button"
                             , onClick Back
                             ]
                             [ text "Back" ]
                         , button
                             [ class "btn btn-primary"
-                            , onClick Continue
+                            , type_ "submit"
                             ]
                             [ text "Next Step" ]
                         ]
