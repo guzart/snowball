@@ -1,0 +1,79 @@
+{
+    meta: {
+        createdAt: "2018-05-15T09:33:42.334Z",
+        host: "https://api.youneedabudget.com/v1"
+    },
+    req: {
+        url: "/budgets/2a736210-c835-45f1-ac62-acbe455218db/categories",
+        method: "GET",
+        headers: {
+            connection: "keep-alive",
+            origin: "https://snowball.guzart.com:8080",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36",
+            accept: "*/*",
+            "accept-encoding": "gzip, deflate, br",
+            "accept-language": "en,es;q=0.9,en-US;q=0.8,es-419;q=0.7"
+        },
+        body: ""
+    },
+    res: {
+        status: 200,
+        headers: {
+            server: [
+                "Cowboy"
+            ],
+            date: [
+                "Tue, 15 May 2018 09:33:45 GMT"
+            ],
+            connection: [
+                "keep-alive"
+            ],
+            "content-type": [
+                "application/json; charset=utf-8"
+            ],
+            "x-rate-limit": [
+                "7/200"
+            ],
+            vary: [
+                "Accept-Encoding, Origin"
+            ],
+            "content-encoding": [
+                "gzip"
+            ],
+            etag: [
+                "W/\"064f5ff0f8e3fedbcdca141cc9902b48\""
+            ],
+            "cache-control": [
+                "max-age=0, private, must-revalidate"
+            ],
+            "x-request-id": [
+                "e2d8d733-0c85-436a-8939-b5ed44b52d31"
+            ],
+            "x-runtime": [
+                "0.125092"
+            ],
+            "access-control-allow-origin": [
+                "https://snowball.guzart.com:8080"
+            ],
+            "access-control-allow-methods": [
+                "GET, POST, PUT, OPTIONS"
+            ],
+            "access-control-max-age": [
+                "1728000"
+            ],
+            "access-control-allow-credentials": [
+                "true"
+            ],
+            "strict-transport-security": [
+                "max-age=15552000"
+            ],
+            "transfer-encoding": [
+                "chunked"
+            ],
+            via: [
+                "1.1 vegur"
+            ]
+        },
+        body: "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"
+    }
+}
