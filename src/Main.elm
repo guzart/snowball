@@ -3,6 +3,7 @@ module Main exposing (Model, Msg, update, view, subscriptions, init)
 import Data.AccessToken as AccessToken exposing (AccessToken(..), decoder)
 import Data.Account exposing (Account)
 import Data.Budget exposing (Budget)
+import Data.CategoryGroup exposing (CategoryGroup)
 import Data.Session as Session exposing (Session)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -13,6 +14,7 @@ import Json.Decode as Decode exposing (Value)
 import Ports
 import Request.Account as AccountRequest
 import Request.Budget as BudgetRequest
+import Request.CategoryGroup as CategoryGroupRequest
 import Screen.DebtDetails as DebtDetails
 import Views.Assets exposing (assets)
 import Views.Footer as Footer
@@ -113,7 +115,7 @@ type Screen
     | ChooseBudgetScreen
     | ChooseAccountsScreen
     | DebtDetailsScreen
-    | PaymentCategoryScreen
+    | ChooseCategoryScreen
     | DebtStrategiesScreen
     | DebtStrategyScreen
     | ErrorScreen
@@ -149,6 +151,7 @@ type Msg
     | Disconnect
     | HandleBudgetsResponse (Result Http.Error (List Budget))
     | HandleAccountsResponse (Result Http.Error (List Account))
+    | HandleCategoriesResponse (Result Http.Error (List CategoryGroup))
     | SelectBudget (Maybe Budget)
     | ToggleAccount Account
     | DebtDetailsMsg DebtDetails.Msg
@@ -231,6 +234,19 @@ update msg model =
                     , Cmd.none
                     )
 
+        HandleCategoriesResponse result ->
+            case result of
+                Ok categoryGroups ->
+                    ( { model | isLoadingScreenData = False }, Cmd.none )
+
+                Err _ ->
+                    ( { model
+                        | isLoadingScreenData = False
+                        , errorMessage = defaultErrorMessage
+                      }
+                    , Cmd.none
+                    )
+
         SelectBudget maybeBudget ->
             ( { model | session = Session.setBudget maybeBudget model.session }, Cmd.none )
 
@@ -252,12 +268,12 @@ update msg model =
 
                         DebtDetails.GoNext ->
                             -- TODO: update session debtDetails from DebtDetail.detailEdits
-                            { model | currentScreen = PaymentCategoryScreen }
+                            { model | currentScreen = ChooseCategoryScreen }
 
                 ( newModel, newCmd ) =
                     loadScreenData { modelScreenMsg | debtDetails = screenModel }
             in
-                newModel => Cmd.batch [ Cmd.map DebtDetailsMsg screenCmd ]
+                newModel => Cmd.batch [ Cmd.map DebtDetailsMsg screenCmd, newCmd ]
 
         GoToChooseBudget ->
             loadScreenData { model | currentScreen = ChooseBudgetScreen }
@@ -312,12 +328,27 @@ loadScreenData model =
         ChooseAccountsScreen ->
             case model.session.budget of
                 Nothing ->
-                    ( { model | errorMessage = Just "Something went wrong, we couldn't find your selected budget." }, Cmd.none )
+                    ( { model | errorMessage = Just "Something went wrong, we couldn't find your selected budget." }
+                    , Cmd.none
+                    )
 
                 Just budget ->
                     ( { model | isLoadingScreenData = True }
-                    , AccountRequest.list model.apiUrl model.session.token budget
+                    , AccountRequest.list model.apiUrl model.session.token budget.id
                         |> Http.send HandleAccountsResponse
+                    )
+
+        ChooseCategoryScreen ->
+            case model.session.budget of
+                Nothing ->
+                    ( { model | errorMessage = Just "Something went wrong, we couldn't find your selected budget." }
+                    , Cmd.none
+                    )
+
+                Just budget ->
+                    ( { model | isLoadingScreenData = True }
+                    , CategoryGroupRequest.list model.apiUrl model.session.token budget.id
+                        |> Http.send HandleCategoriesResponse
                     )
 
         _ ->
@@ -360,6 +391,9 @@ view model =
 
         DebtDetailsScreen ->
             viewDebtDetails model
+
+        ChooseCategoryScreen ->
+            viewCategoryGroups
 
         _ ->
             viewError model
@@ -518,6 +552,11 @@ viewBudgetList maybeBudgets selectedBudget =
                     )
                     budgets
                 )
+
+
+viewCategoryGroups : Html Msg
+viewCategoryGroups =
+    div [] []
 
 
 viewWelcome : Model -> Html Msg

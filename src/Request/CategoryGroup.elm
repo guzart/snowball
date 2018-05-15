@@ -1,20 +1,24 @@
-module Request.Account exposing (list)
+module Request.CategoryGroup exposing (list)
 
-import Data.Account as Account exposing (Account)
 import Data.AccessToken exposing (AccessToken, withAuthorization)
+import Data.CategoryGroup as CategoryGroup exposing (CategoryGroup)
 import Http
 import HttpBuilder exposing (withExpect)
 import Json.Decode as Decode
 
 
-list : String -> Maybe AccessToken -> String -> Http.Request (List Account)
+-- SINGLE --
+-- LIST --
+
+
+list : String -> Maybe AccessToken -> String -> Http.Request (List CategoryGroup)
 list apiUrl maybeToken budgetId =
     let
         expect =
-            Http.expectJson (Decode.at [ "data", "accounts" ] (Decode.list Account.decoder))
+            Http.expectJson (Decode.at [ "data", "category_groups" ] (Decode.list CategoryGroup.decoder))
     in
         apiUrl
-            ++ ("/budgets/" ++ budgetId ++ "/accounts")
+            ++ ("/budgets/" ++ budgetId ++ "/categories")
             |> HttpBuilder.get
             |> HttpBuilder.withExpect expect
             |> withAuthorization maybeToken
