@@ -5,7 +5,7 @@ dotenv.config();
 
 const port = parseInt(String(process.env["TAPES_SERVER_PORT"]), 10);
 const server = talkback({
-  host: process.env["YNAB_API_ENDPOINT"],
+  host: "https://api.youneedabudget.com/v1",
   port,
   ignoreHeaders: [
     "authorization",
