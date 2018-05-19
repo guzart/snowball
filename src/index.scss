@@ -113,6 +113,15 @@ $enable-shadows: true;
   }
 }
 
+.o-choose-category {
+  @include list-group-selectable();
+
+  section {
+    margin: auto;
+    max-width: 30rem;
+  }
+}
+
 .o-site-footer {
   .nav-link {
     font-size: 0.8rem;

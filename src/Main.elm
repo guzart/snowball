@@ -4,6 +4,7 @@ import Data.AccessToken as AccessToken exposing (AccessToken(..), decoder)
 import Data.Account exposing (Account)
 import Data.Budget exposing (Budget)
 import Data.CategoryGroup exposing (CategoryGroup)
+import Data.Category exposing (Category)
 import Data.Session as Session exposing (Session)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -93,6 +94,8 @@ type alias Model =
     , budgets : Maybe (List Budget)
     , accounts : Maybe (List Account)
     , debtDetails : DebtDetails.Model
+    , categoryGroups : Maybe (List CategoryGroup)
+    , categories : Maybe (List Category)
     }
 
 
@@ -107,6 +110,8 @@ modelInitialValue =
     , budgets = Nothing
     , accounts = Nothing
     , debtDetails = DebtDetails.init Nothing
+    , categoryGroups = Nothing
+    , categories = Nothing
     }
 
 
@@ -138,7 +143,12 @@ screenFromSession session =
                             ChooseAccountsScreen
 
                         Just _ ->
-                            DebtDetailsScreen
+                            case session.debtDetails of
+                                Nothing ->
+                                    DebtDetailsScreen
+
+                                Just _ ->
+                                    ChooseCategoryScreen
 
 
 
@@ -155,9 +165,11 @@ type Msg
     | SelectBudget (Maybe Budget)
     | ToggleAccount Account
     | DebtDetailsMsg DebtDetails.Msg
+    | SelectCategory (Maybe Category)
     | GoToChooseBudget
     | GoToChooseAccounts
     | GoToDebtDetails
+    | GoToChooseCategory
     | GoToPaymentStrategies
     | GoToPaymentStrategy
 
@@ -237,11 +249,26 @@ update msg model =
         HandleCategoriesResponse result ->
             case result of
                 Ok categoryGroups ->
-                    ( { model | isLoadingScreenData = False }, Cmd.none )
+                    ( { model
+                        | categoryGroups = Just categoryGroups
+                        , categories =
+                            categoryGroups
+                                |> List.filter (.hidden >> not)
+                                |> List.map .categories
+                                |> List.concat
+                                |> List.filter (.hidden >> not)
+                                |> Just
+                        , isLoadingScreenData = False
+                        , errorMessage = Nothing
+                      }
+                    , Cmd.none
+                    )
 
                 Err _ ->
                     ( { model
-                        | isLoadingScreenData = False
+                        | categoryGroups = Nothing
+                        , categories = Nothing
+                        , isLoadingScreenData = False
                         , errorMessage = defaultErrorMessage
                       }
                     , Cmd.none
@@ -273,7 +300,10 @@ update msg model =
                 ( newModel, newCmd ) =
                     loadScreenData { modelScreenMsg | debtDetails = screenModel }
             in
-                newModel => Cmd.batch [ Cmd.map DebtDetailsMsg screenCmd, newCmd ]
+                newModel => Cmd.batch [ saveSession newModel.session, Cmd.map DebtDetailsMsg screenCmd, newCmd ]
+
+        SelectCategory maybeCategory ->
+            ( { model | session = Session.setCategory maybeCategory model.session }, Cmd.none )
 
         GoToChooseBudget ->
             loadScreenData { model | currentScreen = ChooseBudgetScreen }
@@ -295,9 +325,16 @@ update msg model =
                 ( newModel, newCmd ) =
                     loadScreenData
                         { model
-                            | debtDetails = DebtDetails.initFromAccounts model.accounts
+                            | debtDetails = DebtDetails.initFromAccounts model.session.debtDetails model.session.accounts
                             , currentScreen = DebtDetailsScreen
                         }
+            in
+                ( newModel, Cmd.batch [ saveSession newModel.session, newCmd ] )
+
+        GoToChooseCategory ->
+            let
+                ( newModel, newCmd ) =
+                    loadScreenData { model | currentScreen = ChooseCategoryScreen }
             in
                 ( newModel, Cmd.batch [ saveSession newModel.session, newCmd ] )
 
@@ -393,21 +430,87 @@ view model =
             viewDebtDetails model
 
         ChooseCategoryScreen ->
-            viewCategoryGroups
+            viewChooseCategory model
 
         _ ->
             viewError model
 
 
-viewDebtDetails : Model -> Html Msg
-viewDebtDetails model =
-    viewScreen viewDebtDetailsContent model
+viewWelcome : Model -> Html Msg
+viewWelcome model =
+    section [ class "o-welcome-content" ]
+        [ header [ class "text-center" ]
+            [ h1 [ class "display-3" ]
+                [ img [ src assets.logo ] []
+                , text "Snowball"
+                , em [ class "mx-2" ] [ text " for " ]
+                , strong [] [ text "YNAB" ]
+                ]
+            , p [ class "lead" ] [ text "Debt payment strategies for your YNAB budget." ]
+            ]
+        , div [ class "text-center py-4" ]
+            [ loaderButton "Connecting to YNAB..." "Connect to YNAB" model.isRequestingAccessToken [ class "btn btn-primary btn-lg", onClick RequestAccessToken ]
+            ]
+        ]
 
 
-viewDebtDetailsContent : Model -> Html Msg
-viewDebtDetailsContent model =
-    DebtDetails.view model.session.accounts model.debtDetails
-        |> Html.map DebtDetailsMsg
+viewChooseBudget : Model -> Html Msg
+viewChooseBudget model =
+    viewScreen viewChooseBudgetContent model
+
+
+viewChooseBudgetContent : Model -> Html Msg
+viewChooseBudgetContent model =
+    let
+        isNextDisabled =
+            model.session.budget == Nothing
+
+        content =
+            loadingContent
+                "Loading budgets..."
+                (div []
+                    [ (viewBudgetList model.budgets model.session.budget)
+                    , div [ class "d-flex justify-content-end mt-4" ]
+                        [ button
+                            [ class "btn"
+                            , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
+                            , disabled isNextDisabled
+                            , onClick GoToChooseAccounts
+                            ]
+                            [ text "Next Step" ]
+                        ]
+                    ]
+                )
+                model.isLoadingScreenData
+    in
+        section [ class "o-choose-budget" ]
+            [ header [ class "text-center" ] [ h1 [] [ text "Choose a Budget" ] ]
+            , section [ class "py-4" ] [ content ]
+            ]
+
+
+viewBudgetList : Maybe (List Budget) -> Maybe Budget -> Html Msg
+viewBudgetList maybeBudgets selectedBudget =
+    case maybeBudgets of
+        Nothing ->
+            p [ class "text-center" ] [ text "No budgets." ]
+
+        Just budgets ->
+            div [ class "list-group" ]
+                (List.map
+                    (\budget ->
+                        div
+                            [ class "list-group-item"
+                            , classList [ ( "selected", budget.id == Maybe.withDefault "" (Maybe.map .id selectedBudget) ) ]
+                            , onClick (SelectBudget (Just budget))
+                            ]
+                            [ h5 [ class "mb-0" ] [ text budget.name ]
+                            , small [ class "text-muted font-weight-light" ]
+                                [ text ("Last updated on " ++ (Maybe.withDefault "" budget.lastModifiedOn)) ]
+                            ]
+                    )
+                    budgets
+                )
 
 
 viewChooseAccounts : Model -> Html Msg
@@ -495,28 +598,44 @@ isAccountSelected maybeAccounts account =
             accounts |> List.filter (\a -> a.id == account.id) |> List.isEmpty |> not
 
 
-viewChooseBudget : Model -> Html Msg
-viewChooseBudget model =
-    viewScreen viewChooseBudgetContent model
+viewDebtDetails : Model -> Html Msg
+viewDebtDetails model =
+    viewScreen viewDebtDetailsContent model
 
 
-viewChooseBudgetContent : Model -> Html Msg
-viewChooseBudgetContent model =
+viewDebtDetailsContent : Model -> Html Msg
+viewDebtDetailsContent model =
+    DebtDetails.view model.session.accounts model.debtDetails
+        |> Html.map DebtDetailsMsg
+
+
+viewChooseCategory : Model -> Html Msg
+viewChooseCategory model =
+    viewScreen viewChooseCategoryContent model
+
+
+viewChooseCategoryContent : Model -> Html Msg
+viewChooseCategoryContent model =
     let
         isNextDisabled =
             model.session.budget == Nothing
 
         content =
             loadingContent
-                "Loading budgets..."
+                "Loading budget categories..."
                 (div []
-                    [ (viewBudgetList model.budgets model.session.budget)
-                    , div [ class "d-flex justify-content-end mt-4" ]
+                    [ (viewCategoriesList model.categoryGroups model.categories model.session.category)
+                    , div [ class "d-flex mt-4" ]
                         [ button
+                            [ class "btn btn-outline-dark mr-auto"
+                            , onClick GoToDebtDetails
+                            ]
+                            [ text "Back" ]
+                        , button
                             [ class "btn"
                             , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
                             , disabled isNextDisabled
-                            , onClick GoToChooseAccounts
+                            , onClick GoToPaymentStrategies
                             ]
                             [ text "Next Step" ]
                         ]
@@ -524,62 +643,52 @@ viewChooseBudgetContent model =
                 )
                 model.isLoadingScreenData
     in
-        section [ class "o-choose-budget" ]
-            [ header [ class "text-center" ] [ h1 [] [ text "Choose a Budget" ] ]
+        section [ class "o-choose-category" ]
+            [ header [ class "text-center" ] [ h1 [] [ text "Choose a Category" ] ]
             , section [ class "py-4" ] [ content ]
             ]
 
 
-viewBudgetList : Maybe (List Budget) -> Maybe Budget -> Html Msg
-viewBudgetList maybeBudgets selectedBudget =
-    case maybeBudgets of
+viewCategoriesList : Maybe (List CategoryGroup) -> Maybe (List Category) -> Maybe Category -> Html Msg
+viewCategoriesList maybeCategoryGroups maybeCategories maybeSelectedCategory =
+    case maybeCategories of
         Nothing ->
-            p [ class "text-center" ] [ text "No budgets" ]
+            p [ class "text-center" ] [ text "No budget categories." ]
 
-        Just budgets ->
+        Just categories ->
             div [ class "list-group" ]
                 (List.map
-                    (\budget ->
-                        div
-                            [ class "list-group-item"
-                            , classList [ ( "selected", budget.id == Maybe.withDefault "" (Maybe.map .id selectedBudget) ) ]
-                            , onClick (SelectBudget (Just budget))
-                            ]
-                            [ h5 [ class "mb-0" ] [ text budget.name ]
-                            , small [ class "text-muted font-weight-light" ]
-                                [ text ("Last updated on " ++ (Maybe.withDefault "" budget.lastModifiedOn)) ]
-                            ]
+                    (\category ->
+                        let
+                            categoryGroupName =
+                                findCategoryGroup maybeCategoryGroups category.categoryGroupId
+                                    |> Maybe.map .name
+                                    |> Maybe.withDefault ""
+                        in
+                            div
+                                [ class "list-group-item"
+                                , classList [ ( "selected", category.id == Maybe.withDefault "" (Maybe.map .id maybeSelectedCategory) ) ]
+                                , onClick (SelectCategory (Just category))
+                                ]
+                                [ h5 [ class "mb-0" ] [ text category.name ]
+                                , small [ class "text-muted font-weight-light" ]
+                                    [ text categoryGroupName ]
+                                ]
                     )
-                    budgets
+                    categories
                 )
 
 
-viewCategoryGroups : Html Msg
-viewCategoryGroups =
-    div [] []
+findCategoryGroup : Maybe (List CategoryGroup) -> String -> Maybe CategoryGroup
+findCategoryGroup maybeCategoryGroups categoryGroupId =
+    case maybeCategoryGroups of
+        Nothing ->
+            Nothing
 
-
-viewWelcome : Model -> Html Msg
-viewWelcome model =
-    viewScreen viewWelcomeContent model
-
-
-viewWelcomeContent : Model -> Html Msg
-viewWelcomeContent model =
-    section [ class "o-welcome-content" ]
-        [ header [ class "text-center" ]
-            [ h1 [ class "display-3" ]
-                [ img [ src assets.logo ] []
-                , text "Snowball"
-                , em [ class "mx-2" ] [ text " for " ]
-                , strong [] [ text "YNAB" ]
-                ]
-            , p [ class "lead" ] [ text "Debt payment strategies for your YNAB budget." ]
-            ]
-        , div [ class "text-center py-4" ]
-            [ loaderButton "Connecting to YNAB..." "Connect to YNAB" model.isRequestingAccessToken [ class "btn btn-primary btn-lg", onClick RequestAccessToken ]
-            ]
-        ]
+        Just categoryGroups ->
+            categoryGroups
+                |> List.filter (\cg -> cg.id == categoryGroupId)
+                |> List.head
 
 
 viewError : Model -> Html Msg

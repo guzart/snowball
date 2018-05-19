@@ -41,16 +41,24 @@ init maybeDebtDetails =
         { showErrors = False, detailEdits = detailEdits }
 
 
-initFromAccounts : Maybe (List Account) -> Model
-initFromAccounts maybeAccounts =
+initFromAccounts : Maybe (Dict String DebtDetail) -> Maybe (List Account) -> Model
+initFromAccounts maybeDebtDetails maybeAccounts =
     let
+        baseDetailEdits =
+            init maybeDebtDetails
+                |> .detailEdits
+
         detailEdits =
             case maybeAccounts of
                 Nothing ->
                     Dict.empty
 
                 Just accounts ->
-                    List.map (\a -> ( a.id, initForAccount a.id )) accounts
+                    List.map .id accounts
+                        |> List.map
+                            (\id ->
+                                id => Maybe.withDefault (initForAccount id) (Dict.get id baseDetailEdits)
+                            )
                         |> Dict.fromList
     in
         { showErrors = False, detailEdits = detailEdits }

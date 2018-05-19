@@ -1,22 +1,25 @@
-module Data.Session exposing (Session, decoder, empty, encode, setBudget, setToken, toggleAccount, updateDebtDetails)
+module Data.Session exposing (Session, decoder, empty, encode, setBudget, setCategory, setToken, toggleAccount, updateDebtDetails)
 
 import Data.AccessToken as AccessToken exposing (AccessToken(..))
 import Data.Account as Account exposing (Account)
 import Data.Budget as Budget exposing (Budget)
 import Data.DebtDetail as DebtDetail exposing (DebtDetail)
+import Data.Category as Category exposing (Category)
 import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (decode, required)
+import Json.Decode.Pipeline exposing (decode, optional, required)
 import Json.Encode as Encode exposing (Value)
 import Json.Encode.Extra as EncodeExtra
 import Util exposing ((=>))
 
 
 type alias Session =
+    -- TODO: Use IDs instead of storing the full object
     { token : Maybe AccessToken
     , budget : Maybe Budget
     , accounts : Maybe (List Account)
     , debtDetails : Maybe (Dict String DebtDetail)
+    , category : Maybe Category
     }
 
 
@@ -26,6 +29,7 @@ empty =
     , budget = Nothing
     , accounts = Nothing
     , debtDetails = Nothing
+    , category = Nothing
     }
 
 
@@ -36,14 +40,22 @@ setToken token session =
 
 setBudget : Maybe Budget -> Session -> Session
 setBudget budget session =
-    { session | budget = budget, accounts = Nothing, debtDetails = Nothing }
+    { session
+        | budget = budget
+        , accounts = Nothing
+        , debtDetails = Nothing
+        , category = Nothing
+    }
 
 
 toggleAccount : Account -> Session -> Session
 toggleAccount account session =
     case session.accounts of
         Nothing ->
-            { session | accounts = Just [ account ], debtDetails = Nothing }
+            { session
+                | accounts = Just [ account ]
+                , debtDetails = Nothing
+            }
 
         Just sessionAccounts ->
             let
@@ -68,7 +80,10 @@ toggleAccount account session =
                             (\a -> ( a.id, Maybe.withDefault (DebtDetail.init a.id) (Dict.get a.id debtDetails) ))
                         |> Dict.fromList
             in
-                { session | accounts = Just nextAccounts, debtDetails = Just nextDebtDetails }
+                { session
+                    | accounts = Just nextAccounts
+                    , debtDetails = Just nextDebtDetails
+                }
 
 
 updateDebtDetails : Session -> Session
@@ -97,6 +112,11 @@ findOrInitDebtDetail maybeDebtDetails account =
             Maybe.withDefault (DebtDetail.init account.id) (Dict.get account.id debtDetails)
 
 
+setCategory : Maybe Category -> Session -> Session
+setCategory category session =
+    { session | category = category }
+
+
 
 -- SERIALIZATION --
 
@@ -105,9 +125,10 @@ decoder : Decoder Session
 decoder =
     decode Session
         |> required "token" (Decode.maybe AccessToken.decoder)
-        |> required "budget" (Decode.maybe Budget.decoder)
-        |> required "accounts" (Decode.maybe (Decode.list Account.decoder))
-        |> required "debtDetails" (Decode.maybe (Decode.dict DebtDetail.decoder))
+        |> optional "budget" (Decode.maybe Budget.decoder) Nothing
+        |> optional "accounts" (Decode.maybe (Decode.list Account.decoder)) Nothing
+        |> optional "debtDetails" (Decode.maybe (Decode.dict DebtDetail.decoder)) Nothing
+        |> optional "category" (Decode.maybe Category.decoder) Nothing
 
 
 encode : Session -> Value
@@ -117,6 +138,7 @@ encode session =
         , "budget" => EncodeExtra.maybe Budget.encode session.budget
         , "accounts" => EncodeExtra.maybe (\accounts -> Encode.list (List.map Account.encode accounts)) session.accounts
         , "debtDetails" => EncodeExtra.maybe (\debtDetails -> Encode.object (List.map (Tuple.mapSecond DebtDetail.encode) (Dict.toList debtDetails))) session.debtDetails
+        , "category" => EncodeExtra.maybe Category.encode session.category
         ]
 
 
