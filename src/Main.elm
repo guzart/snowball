@@ -57,7 +57,7 @@ init val =
                                 | apiUrl = apiUrl
                                 , session = session
                                 , currentScreen = screenFromSession session
-                                , debtDetails = DebtDetails.init session.debtDetails
+                                , debtDetails = DebtDetails.initFromAccounts session.debtDetails session.accounts
                             }
                 in
                     ( newModel, Cmd.batch [ saveSession session, newCmd ] )
@@ -93,9 +93,9 @@ type alias Model =
     , session : Session
     , budgets : Maybe (List Budget)
     , accounts : Maybe (List Account)
-    , debtDetails : DebtDetails.Model
     , categoryGroups : Maybe (List CategoryGroup)
     , categories : Maybe (List Category)
+    , debtDetails : DebtDetails.Model
     }
 
 
@@ -109,9 +109,9 @@ modelInitialValue =
     , session = Session.empty
     , budgets = Nothing
     , accounts = Nothing
-    , debtDetails = DebtDetails.init Nothing
     , categoryGroups = Nothing
     , categories = Nothing
+    , debtDetails = DebtDetails.init Nothing
     }
 
 
@@ -121,7 +121,7 @@ type Screen
     | ChooseAccountsScreen
     | DebtDetailsScreen
     | ChooseCategoryScreen
-    | DebtStrategiesScreen
+    | PaymentStrategiesScreen
     | DebtStrategyScreen
     | ErrorScreen
 
@@ -148,7 +148,12 @@ screenFromSession session =
                                     DebtDetailsScreen
 
                                 Just _ ->
-                                    ChooseCategoryScreen
+                                    case session.category of
+                                        Nothing ->
+                                            ChooseCategoryScreen
+
+                                        Just _ ->
+                                            PaymentStrategiesScreen
 
 
 
@@ -285,22 +290,26 @@ update msg model =
                 ( ( screenModel, screenCmd ), msgFromScreen ) =
                     DebtDetails.update subMsg model.debtDetails
 
-                modelScreenMsg =
+                ( modelScreenMsg, modelScreenCmd ) =
                     case msgFromScreen of
                         DebtDetails.NoOp ->
-                            model
+                            model => Cmd.none
 
                         DebtDetails.GoBack ->
-                            { model | currentScreen = ChooseAccountsScreen }
+                            { model | currentScreen = ChooseAccountsScreen } => Cmd.none
 
                         DebtDetails.GoNext ->
-                            -- TODO: update session debtDetails from DebtDetail.detailEdits
-                            { model | currentScreen = ChooseCategoryScreen }
+                            let
+                                nextSession =
+                                    Session.updateDebtDetails (DebtDetails.buildDebtDetails screenModel) model.session
+                            in
+                                { model | currentScreen = ChooseCategoryScreen, session = nextSession }
+                                    => saveSession nextSession
 
                 ( newModel, newCmd ) =
                     loadScreenData { modelScreenMsg | debtDetails = screenModel }
             in
-                newModel => Cmd.batch [ saveSession newModel.session, Cmd.map DebtDetailsMsg screenCmd, newCmd ]
+                newModel => Cmd.batch [ modelScreenCmd, Cmd.map DebtDetailsMsg screenCmd, newCmd ]
 
         SelectCategory maybeCategory ->
             ( { model | session = Session.setCategory maybeCategory model.session }, Cmd.none )
@@ -339,7 +348,7 @@ update msg model =
                 ( newModel, Cmd.batch [ saveSession newModel.session, newCmd ] )
 
         GoToPaymentStrategies ->
-            ( model, Cmd.none )
+            ( { model | currentScreen = PaymentStrategiesScreen }, saveSession model.session )
 
         GoToPaymentStrategy ->
             ( model, Cmd.none )
@@ -431,6 +440,9 @@ view model =
 
         ChooseCategoryScreen ->
             viewChooseCategory model
+
+        PaymentStrategiesScreen ->
+            viewPaymentStrategies model
 
         _ ->
             viewError model
@@ -679,16 +691,43 @@ viewCategoriesList maybeCategoryGroups maybeCategories maybeSelectedCategory =
                 )
 
 
-findCategoryGroup : Maybe (List CategoryGroup) -> String -> Maybe CategoryGroup
-findCategoryGroup maybeCategoryGroups categoryGroupId =
-    case maybeCategoryGroups of
-        Nothing ->
-            Nothing
+viewPaymentStrategies : Model -> Html Msg
+viewPaymentStrategies model =
+    viewScreen viewPaymentStrategiesContent model
 
-        Just categoryGroups ->
-            categoryGroups
-                |> List.filter (\cg -> cg.id == categoryGroupId)
-                |> List.head
+
+viewPaymentStrategiesContent : Model -> Html Msg
+viewPaymentStrategiesContent model =
+    let
+        budgetName =
+            model.session.budget
+                |> Maybe.map .name
+                |> Maybe.withDefault ""
+
+        totalDebtAmount =
+            model.session.accounts
+                |> Maybe.withDefault []
+                |> List.map .balance
+                |> List.sum
+    in
+        section [ class "o-payment-strategies" ]
+            [ header [ class "text-center" ]
+                [ h1 [] [ text budgetName ]
+                , h2 [ class "h4" ] [ text "Payment Strategies" ]
+                ]
+            , section [ class "py-4" ]
+                [ h3 [ class "text-center text-danger display-4" ]
+                    [ text (toCurrency totalDebtAmount)
+                    ]
+                , div [ class "d-flex mt-4" ]
+                    [ button
+                        [ class "btn btn-outline-dark mr-auto"
+                        , onClick GoToChooseCategory
+                        ]
+                        [ text "Back" ]
+                    ]
+                ]
+            ]
 
 
 viewError : Model -> Html Msg
@@ -780,3 +819,15 @@ loadingMessage label =
         [ p [ class "d-block" ] [ i [ class "far fa-snowflake fa-spin fa-2x" ] [] ]
         , p [ class "font-weight-light" ] [ text label ]
         ]
+
+
+findCategoryGroup : Maybe (List CategoryGroup) -> String -> Maybe CategoryGroup
+findCategoryGroup maybeCategoryGroups categoryGroupId =
+    case maybeCategoryGroups of
+        Nothing ->
+            Nothing
+
+        Just categoryGroups ->
+            categoryGroups
+                |> List.filter (\cg -> cg.id == categoryGroupId)
+                |> List.head

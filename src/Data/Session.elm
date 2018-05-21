@@ -77,7 +77,7 @@ toggleAccount account session =
                 nextDebtDetails =
                     nextAccounts
                         |> List.map
-                            (\a -> ( a.id, Maybe.withDefault (DebtDetail.init a.id) (Dict.get a.id debtDetails) ))
+                            (\a -> ( a.id, Maybe.withDefault (DebtDetail.init a.id a.balance) (Dict.get a.id debtDetails) ))
                         |> Dict.fromList
             in
                 { session
@@ -86,30 +86,19 @@ toggleAccount account session =
                 }
 
 
-updateDebtDetails : Session -> Session
-updateDebtDetails session =
-    case session.accounts of
-        Nothing ->
-            { session | debtDetails = Nothing }
-
-        Just accounts ->
-            let
-                newDebtDetails =
-                    accounts
-                        |> List.map (\a -> ( a.id, findOrInitDebtDetail session.debtDetails a ))
-                        |> Dict.fromList
-            in
-                { session | debtDetails = Just newDebtDetails }
+updateDebtDetails : Dict String DebtDetail -> Session -> Session
+updateDebtDetails debtDetails session =
+    { session | debtDetails = Just debtDetails }
 
 
 findOrInitDebtDetail : Maybe (Dict String DebtDetail) -> Account -> DebtDetail
 findOrInitDebtDetail maybeDebtDetails account =
     case maybeDebtDetails of
         Nothing ->
-            DebtDetail.init account.id
+            DebtDetail.init account.id 0
 
         Just debtDetails ->
-            Maybe.withDefault (DebtDetail.init account.id) (Dict.get account.id debtDetails)
+            Maybe.withDefault (DebtDetail.init account.id account.balance) (Dict.get account.id debtDetails)
 
 
 setCategory : Maybe Category -> Session -> Session

@@ -1,4 +1,4 @@
-module Screen.DebtDetails exposing (ExternalMsg(..), Model, Msg, init, initFromAccounts, update, view)
+module Screen.DebtDetails exposing (ExternalMsg(..), Model, Msg, buildDebtDetails, init, initFromAccounts, update, view)
 
 import Data.Account exposing (Account)
 import Data.DebtDetail exposing (DebtDetail)
@@ -21,6 +21,7 @@ type alias Model =
 
 type alias DetailEdit =
     { accountId : String
+    , balance : Int
     , errors : List Error
     , rate : String
     , minPayment : String
@@ -54,10 +55,13 @@ initFromAccounts maybeDebtDetails maybeAccounts =
                     Dict.empty
 
                 Just accounts ->
-                    List.map .id accounts
+                    accounts
                         |> List.map
-                            (\id ->
-                                id => Maybe.withDefault (initForAccount id) (Dict.get id baseDetailEdits)
+                            (\a ->
+                                a.id
+                                    => Maybe.withDefault
+                                        (initForAccount a.id a.balance)
+                                        (Dict.get a.id baseDetailEdits)
                             )
                         |> Dict.fromList
     in
@@ -67,15 +71,17 @@ initFromAccounts maybeDebtDetails maybeAccounts =
 initFromDebtDetail : DebtDetail -> DetailEdit
 initFromDebtDetail debtDetail =
     { accountId = debtDetail.accountId
+    , balance = debtDetail.balance
     , errors = []
     , rate = toString debtDetail.rate
     , minPayment = toString debtDetail.minPayment
     }
 
 
-initForAccount : String -> DetailEdit
-initForAccount accountId =
+initForAccount : String -> Int -> DetailEdit
+initForAccount accountId balance =
     { accountId = accountId
+    , balance = balance
     , errors = []
     , rate = ""
     , minPayment = ""
@@ -152,13 +158,6 @@ update msg model =
 validateDetailEdit : String -> DetailEdit -> DetailEdit
 validateDetailEdit _ detailEdit =
     { detailEdit | errors = validate detailEditValidator detailEdit }
-
-
-findAccountDetailEdit : String -> List DetailEdit -> DetailEdit
-findAccountDetailEdit accountId detailEdits =
-    List.filter (\dd -> dd.accountId == accountId) detailEdits
-        |> List.head
-        |> Maybe.withDefault (initForAccount accountId)
 
 
 
@@ -380,6 +379,43 @@ findErrorMessage field errors =
     List.filter (\( f, _ ) -> f == field) errors
         |> List.head
         |> Maybe.map Tuple.second
+
+
+buildDebtDetails : Model -> Dict String DebtDetail
+buildDebtDetails model =
+    model.detailEdits
+        |> Dict.map validateDetailEdit
+        |> Dict.filter (\_ de -> List.isEmpty de.errors)
+        |> Dict.map
+            (\_ de ->
+                let
+                    ( maybeRate, maybeMinPayment ) =
+                        ( String.toInt de.rate |> Result.toMaybe
+                        , String.toInt de.minPayment |> Result.toMaybe
+                        )
+                in
+                    case ( maybeRate, maybeMinPayment ) of
+                        ( Just rate, Just minPayment ) ->
+                            Just
+                                { accountId = de.accountId
+                                , balance = de.balance
+                                , rate = rate
+                                , minPayment = minPayment
+                                }
+
+                        _ ->
+                            Nothing
+            )
+        |> Dict.foldl
+            (\k mde acc ->
+                case mde of
+                    Just de ->
+                        Dict.insert k de acc
+
+                    Nothing ->
+                        acc
+            )
+            Dict.empty
 
 
 
