@@ -9,8 +9,8 @@ import Util exposing ((=>))
 type alias DebtDetail =
     { accountId : String
     , balance : Int
-    , rate : Int
-    , minPayment : Int
+    , rate : Float
+    , minPayment : Float
     }
 
 
@@ -32,8 +32,8 @@ decoder =
     decode DebtDetail
         |> required "accountId" Decode.string
         |> required "balance" Decode.int
-        |> required "rate" Decode.int
-        |> required "minPayment" Decode.int
+        |> required "rate" Decode.float
+        |> required "minPayment" Decode.float
 
 
 encode : DebtDetail -> Value
@@ -41,6 +41,6 @@ encode debtDetail =
     Encode.object
         [ "accountId" => Encode.string debtDetail.accountId
         , "balance" => Encode.int debtDetail.balance
-        , "rate" => Encode.int debtDetail.rate
-        , "minPayment" => Encode.int debtDetail.minPayment
+        , "rate" => Encode.float debtDetail.rate
+        , "minPayment" => Encode.float debtDetail.minPayment
         ]

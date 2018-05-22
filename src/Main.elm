@@ -301,7 +301,9 @@ update msg model =
                         DebtDetails.GoNext ->
                             let
                                 nextSession =
-                                    Session.updateDebtDetails (DebtDetails.buildDebtDetails screenModel) model.session
+                                    Session.updateDebtDetails
+                                        (DebtDetails.buildDebtDetails screenModel)
+                                        model.session
                             in
                                 { model | currentScreen = ChooseCategoryScreen, session = nextSession }
                                     => saveSession nextSession

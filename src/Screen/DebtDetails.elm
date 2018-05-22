@@ -390,8 +390,8 @@ buildDebtDetails model =
             (\_ de ->
                 let
                     ( maybeRate, maybeMinPayment ) =
-                        ( String.toInt de.rate |> Result.toMaybe
-                        , String.toInt de.minPayment |> Result.toMaybe
+                        ( String.toFloat de.rate |> Result.toMaybe
+                        , String.toFloat de.minPayment |> Result.toMaybe
                         )
                 in
                     case ( maybeRate, maybeMinPayment ) of
