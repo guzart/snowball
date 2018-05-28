@@ -1,6 +1,6 @@
 {
     meta: {
-        createdAt: "2018-05-07T01:03:05.194Z",
+        createdAt: "2018-05-28T17:02:07.523Z",
         host: "https://api.youneedabudget.com/v1",
         resHumanReadable: true
     },
@@ -11,7 +11,7 @@
             connection: "keep-alive",
             "access-control-request-method": "GET",
             origin: "https://snowball.guzart.com:8080",
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
             "access-control-request-headers": "authorization",
             accept: "*/*",
             "accept-encoding": "gzip, deflate, br",
@@ -26,7 +26,7 @@
                 "Cowboy"
             ],
             date: [
-                "Mon, 07 May 2018 01:03:04 GMT"
+                "Mon, 28 May 2018 17:02:06 GMT"
             ],
             connection: [
                 "keep-alive"
@@ -53,7 +53,7 @@
                 "max-age=631152000; includeSubdomains"
             ],
             "content-security-policy": [
-                "default-src 'self' ; block-all-mixed-content; child-src djtflbt20bdde.cloudfront.net player.vimeo.com api.recurly.com share.intercom.io ; connect-src 'self' *.helpscoutdocs.com api.ipify.org secure.helpscout.net d3hb14vkzrxvla.cloudfront.net beaconapi.helpscout.net wss://ws-helpscout.pusher.com api.recurly.com wss://*.intercom.io *.intercom.io uploads.intercomcdn.com uploads.intercomusercontent.com api.rollbar.com ; font-src https://evergreen-production-youneedabudgetco.netdna-ssl.com 'self' data: fonts.gstatic.com js.intercomcdn.com; img-src 'self' data: d33v4339jhl8k0.cloudfront.net *.gravatar.com js.intercomcdn.com static.intercomassets.com uploads.intercomcdn.com uploads.intercomusercontent.com https://evergreen-production-youneedabudgetco.netdna-ssl.com sslcdn-youneedabudgetco.netdna-ssl.com googleads.g.doubleclick.net stats.g.doubleclick.net www.googleadservices.com www.google-analytics.com www.facebook.com www.google.com www.google.ca www.google.co.uk www.google.de www.google.cz www.google.com.au www.google.com.br www.google.ie www.google.it www.google.cl online.swagger.io ; manifest-src 'self' sslcdn-youneedabudgetco.netdna-ssl.com; media-src 'self' *.intercomcdn.com ; object-src djtflbt20bdde.cloudfront.net; script-src https://evergreen-production-youneedabudgetco.netdna-ssl.com 'self' app.intercom.io widget.intercom.io js.intercomcdn.com ajax.aspnetcdn.com ajax.googleapis.com d37gvrvc0wt4s1.cloudfront.net djtflbt20bdde.cloudfront.net beacon-v2.helpscout.net stats.pusher.com js.recurly.com www.google-analytics.com www.googleadservices.com connect.facebook.net code.jquery.com ; style-src https://evergreen-production-youneedabudgetco.netdna-ssl.com 'self' 'unsafe-inline' djtflbt20bdde.cloudfront.net fonts.googleapis.com fonts.gstatic.com ynab-evergreen-production.s3.amazonaws.com "
+                "default-src 'self' ; block-all-mixed-content; child-src www.youneedabudget.com djtflbt20bdde.cloudfront.net player.vimeo.com api.recurly.com share.intercom.io ; connect-src 'self' *.helpscoutdocs.com api.ipify.org secure.helpscout.net d3hb14vkzrxvla.cloudfront.net beaconapi.helpscout.net wss://ws-helpscout.pusher.com api.recurly.com wss://*.intercom.io *.intercom.io uploads.intercomcdn.com uploads.intercomusercontent.com api.rollbar.com ; font-src https://evergreen-production-youneedabudgetco.netdna-ssl.com 'self' data: fonts.gstatic.com js.intercomcdn.com; img-src 'self' data: d33v4339jhl8k0.cloudfront.net *.gravatar.com js.intercomcdn.com static.intercomassets.com uploads.intercomcdn.com uploads.intercomusercontent.com https://evergreen-production-youneedabudgetco.netdna-ssl.com sslcdn-youneedabudgetco.netdna-ssl.com googleads.g.doubleclick.net stats.g.doubleclick.net www.googleadservices.com www.google-analytics.com www.facebook.com www.google.com www.google.ca www.google.co.uk www.google.de www.google.cz www.google.com.au www.google.com.br www.google.ie www.google.it www.google.cl online.swagger.io ; manifest-src 'self' sslcdn-youneedabudgetco.netdna-ssl.com; media-src 'self' *.intercomcdn.com ; object-src djtflbt20bdde.cloudfront.net; script-src https://evergreen-production-youneedabudgetco.netdna-ssl.com 'self' app.intercom.io widget.intercom.io js.intercomcdn.com ajax.aspnetcdn.com ajax.googleapis.com d37gvrvc0wt4s1.cloudfront.net djtflbt20bdde.cloudfront.net beacon-v2.helpscout.net stats.pusher.com js.recurly.com www.google-analytics.com www.googleadservices.com connect.facebook.net code.jquery.com ; style-src https://evergreen-production-youneedabudgetco.netdna-ssl.com 'self' 'unsafe-inline' djtflbt20bdde.cloudfront.net fonts.googleapis.com fonts.gstatic.com ynab-evergreen-production.s3.amazonaws.com "
             ],
             "referrer-policy": [
                 "origin-when-cross-origin"

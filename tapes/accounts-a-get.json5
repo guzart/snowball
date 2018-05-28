@@ -1,6 +1,6 @@
 {
     meta: {
-        createdAt: "2018-05-07T01:03:05.511Z",
+        createdAt: "2018-05-28T17:02:07.773Z",
         host: "https://api.youneedabudget.com/v1"
     },
     req: {
@@ -9,7 +9,7 @@
         headers: {
             connection: "keep-alive",
             origin: "https://snowball.guzart.com:8080",
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36",
             accept: "*/*",
             "accept-encoding": "gzip, deflate, br",
             "accept-language": "en,es;q=0.9,en-US;q=0.8,es-419;q=0.7"
@@ -23,7 +23,7 @@
                 "Cowboy"
             ],
             date: [
-                "Mon, 07 May 2018 01:03:05 GMT"
+                "Mon, 28 May 2018 17:02:06 GMT"
             ],
             connection: [
                 "keep-alive"
@@ -41,16 +41,16 @@
                 "gzip"
             ],
             etag: [
-                "W/\"b671e13d120812673e0df4499858bc4a\""
+                "W/\"d66114250c78c3d3318397422db78133\""
             ],
             "cache-control": [
                 "max-age=0, private, must-revalidate"
             ],
             "x-request-id": [
-                "7ea30042-6863-4cc4-a2c0-83bdaa65f32d"
+                "7e565f9c-d118-4482-8296-683bb8d70790"
             ],
             "x-runtime": [
-                "0.063792"
+                "0.057709"
             ],
             "access-control-allow-origin": [
                 "https://snowball.guzart.com:8080"
@@ -74,6 +74,6 @@
                 "1.1 vegur"
             ]
         },
-        body: "H4sIAMml71oAA7TTTWvbMAAG4L9ixHqzjD4tKdBTdhm0bKddllH0mZo6crHlQwn571PaLHbaJBTGdNP7yliPJW+B00mDxRZoa7sxpgEsfm1B48ACUEYQl9ZCyYWHzNgAFeMCYlYjEzxGda1BCaLe+Lx6+ejtUxPXOUkvz/vETkkXH8zo1j6BRepHXwLbdoPPLwm6HfI0dik/Ece2LYHRrY42T7FSKI/9Yq977x6ODUHorRnjhw7ifbUrDwjOMTOGCYgwrSET1ENNXQ2DQ5yrYIIIYULcd33Saz8ZNjlYvyUzw2HXZxFgFW+PYxW/xeR7P6SCVvxmFe+bWPzQLxsfU/EFl3mvYCbOnxb9pZ2BTeUZ94wcpKSCWegsY5BZ5aAKlENZU8+YxlSoGfmuib7oQvHVmzS525x+D8v8hiZ9+vwu0QmqKHuPF6RC9ARP5UX6sboKp9RyF/JdJa9wIfPVVdJA54hWTDtKApqdtR7y/oql7t3szr6KD9m/qUWl6Hs0xZUgJ2jGL6KP1VW0sHVNPGeQmJDRztRQGqMgkkQGhbWTdPaX/mwG/V+0qsIfsDk7sYqLVHFN+nu3+wMAAP//AwD11G9kpwQAAA=="
+        body: "H4sIAA82DFsAA7TTTWvbMAAG4L9ixHqzjD4tKdBTdhm0bKddllH0mZo6crHlQwn571PaLHbaJBTGdNP7yliPJW+B00mDxRZoa7sxpgEsfm1B48ACUEYQl9ZCyYWHzNgAFeMCYlYjEzxGda1BCaLe+Lx6+ejtUxPXOUkvz/vETkkXH8zo1j6BRepHXwLbdoPPLwm6HfI0dik/Ece2LYHRrY42T7FSKI/9Yq977x6ODUHorRnjhw7ifbUrDwjOMTOGCYgwrSET1ENNXQ2DQ5yrYIIIYULcd33Saz8ZNjlYvyUzw2HXZxFgFW+PYxW/xeR7P6SCVvxmFe+bWPzQLxsfU/EFl3mvYCbOnxb9pZ2BTeUZ94wcpKSCWegsY5BZ5aAKlENZU8+YxlSoGfmuib7oQvHVmzS525x+D8v8hiZ9+vwu0QmqKHuPF6RC9ARP5UX6sboKp9RyF/JdJa9wIfPVVdJA54hWTDtKApqdtR7y/oql7t3szr6KD9m/qUWl6Hs0xZUgJ2jGL6KP1VW0sHVNPGeQmJDRztRQGqMgkkQGhbWTdPaX/mwG/V+0qsIfsDk7sYqLVHFN+nu3+wMAAP//AwD11G9kpwQAAA=="
     }
 }
