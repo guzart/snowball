@@ -1,4 +1,4 @@
-module Data.PaymentStrategy exposing (PaymentStrategy, initHighestBalanceFirst, initHighInterestFirst, initLowestBalanceFirst, initLowestInterestFirst)
+module Data.PaymentStrategy exposing (PaymentStrategy, Payment, initHighestBalanceFirst, initHighInterestFirst, initLowestBalanceFirst, initLowestInterestFirst)
 
 import Data.DebtDetail exposing (DebtDetail)
 
@@ -16,6 +16,7 @@ type alias Schedule =
     , balance : Int
     , rate : Float
     , minPayment : Int
+    , initialBalance : Int
     , totalInterest : Int
     , totalMonths : Int
     , payments : List Payment
@@ -27,6 +28,7 @@ type alias Payment =
     , principal : Int
     , interest : Int
     , balance : Int
+    , number : Int
     }
 
 
@@ -91,9 +93,10 @@ initSchedules debtDetails =
         |> List.map
             (\dd ->
                 { accountId = dd.accountId
-                , balance = dd.balance
+                , balance = abs dd.balance
                 , rate = dd.rate
                 , minPayment = dd.minPayment
+                , initialBalance = abs dd.balance
                 , totalInterest = 0
                 , totalMonths = 0
                 , payments = []
@@ -101,60 +104,42 @@ initSchedules debtDetails =
             )
 
 
-
--- Schedule
--- {
--- , accountId : String
--- , rate : Float
--- , minPayment : Float
--- , totalInterest : Float
--- , months : Int
--- , balance : Int
---     payments: [
---         amount: 0, # How much was paid
---         principal: 0, # How much went to principal
---         interest: 0, # How much was interest
---         balance: 0, # Whats the remaining balance
---     ]
--- }
-
-
 generateSchedules : Int -> List Schedule -> Int -> List Schedule
 generateSchedules monthlyAmount schedules count =
     let
-        maybeNextScheduleForExtra =
+        maybeScheduleForExtra =
             schedules
-                |> List.filter (\s -> s.balance < 0)
+                |> List.filter (\s -> s.balance > 0)
                 |> List.head
     in
-        case maybeNextScheduleForExtra of
+        case maybeScheduleForExtra of
             Nothing ->
                 schedules
 
-            Just nextScheduleForExtra ->
+            Just scheduleForExtra ->
                 if count > 420 then
                     schedules
                 else
                     let
                         minPayments =
                             schedules
-                                |> List.map (\s -> min (abs s.balance) s.minPayment)
+                                |> List.map (\s -> min s.balance s.minPayment)
                                 |> List.sum
 
                         -- Extra after payin minimums
                         extra =
                             monthlyAmount - minPayments
 
-                        newDebtSchedules =
+                        newSchedules =
                             schedules
                                 |> List.map
                                     (\s ->
                                         let
                                             minPayment =
-                                                min (abs s.balance) s.minPayment
+                                                min s.balance s.minPayment
 
                                             extraPayment =
-                                                if s.accountId == nextScheduleForExtra.accountId then
+                                                if s.accountId == scheduleForExtra.accountId then
                                                     extra
                                                 else
                                                     0
@@ -168,7 +153,7 @@ generateSchedules monthlyAmount schedules count =
                                                 s
                                     )
                     in
-                        generateSchedules monthlyAmount newDebtSchedules (count + 1)
+                        generateSchedules monthlyAmount newSchedules (count + 1)
 
 
 applyPaymentToSchedule : Int -> Schedule -> Schedule
@@ -178,13 +163,14 @@ applyPaymentToSchedule amount schedule =
             round (schedule.rate * 1000 / 12)
 
         interest =
-            round (toFloat ((abs schedule.balance) * periodRate) / 100000)
+            round (toFloat (schedule.balance * periodRate) / 100000)
 
         payment =
             { amount = amount
-            , principal = amount + interest
+            , principal = amount - interest
             , interest = interest
-            , balance = min 0 (schedule.balance + amount)
+            , balance = max 0 (schedule.balance - amount)
+            , number = (List.length schedule.payments) + 1
             }
     in
         { schedule

@@ -1,4 +1,4 @@
-module Data.Account exposing (Account, decoder, encode)
+module Data.Account exposing (Account, init, decoder, encode)
 
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (decode, required)
@@ -32,6 +32,20 @@ type AccountType
     | Mortgage
     | OtherAsset
     | OtherLiability
+
+
+init : String -> Account
+init id =
+    { id = id
+    , name = ""
+    , accountType = ""
+    , onBudget = False
+    , closed = False
+    , note = Nothing
+    , balance = 0
+    , clearedBalance = 0
+    , unclearedBalance = 0
+    }
 
 
 

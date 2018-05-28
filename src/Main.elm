@@ -1,12 +1,13 @@
 module Main exposing (Model, Msg, update, view, subscriptions, init)
 
 import Data.AccessToken as AccessToken exposing (AccessToken(..), decoder)
-import Data.Account exposing (Account)
+import Data.Account as Account exposing (Account)
 import Data.Budget exposing (Budget)
 import Data.CategoryGroup exposing (CategoryGroup)
 import Data.Category exposing (Category)
-import Data.PaymentStrategy as PaymentStrategy exposing (PaymentStrategy)
+import Data.PaymentStrategy as PaymentStrategy exposing (PaymentStrategy, Payment)
 import Data.Session as Session exposing (Session)
+import Date exposing (Date)
 import Dict
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -14,6 +15,19 @@ import Html.Events exposing (..)
 import Http
 import Json.Encode as Encode
 import Json.Decode as Decode exposing (Value)
+import LineChart
+import LineChart.Area
+import LineChart.Axis
+import LineChart.Axis.Intersection
+import LineChart.Colors
+import LineChart.Container
+import LineChart.Dots
+import LineChart.Events
+import LineChart.Grid
+import LineChart.Interpolation
+import LineChart.Junk
+import LineChart.Legends
+import LineChart.Line
 import Ports
 import Request.Account as AccountRequest
 import Request.Budget as BudgetRequest
@@ -100,6 +114,7 @@ type alias Model =
     , debtDetails : DebtDetails.Model
     , paymentStrategies : Maybe (List PaymentStrategy)
     , currentPaymentStrategy : Maybe PaymentStrategy
+    , today : Maybe Date
     }
 
 
@@ -118,6 +133,7 @@ modelInitialValue =
     , debtDetails = DebtDetails.init Nothing
     , paymentStrategies = Nothing
     , currentPaymentStrategy = Nothing
+    , today = Nothing
     }
 
 
@@ -821,13 +837,30 @@ viewPaymentStrategy model =
 viewPaymentStrategyContent : Model -> Html Msg
 viewPaymentStrategyContent model =
     let
-        paymentStrategy =
+        maybePaymentStrategy =
             model.currentPaymentStrategy
 
         title =
-            paymentStrategy
+            maybePaymentStrategy
                 |> Maybe.map .name
                 |> Maybe.withDefault "Payment Strategy Not Found"
+
+        footer =
+            div [ class "d-flex mt-4" ]
+                [ button
+                    [ class "btn btn-outline-dark mr-auto"
+                    , onClick GoToPaymentStrategies
+                    ]
+                    [ text "Back" ]
+                ]
+
+        paymentChart =
+            case ( model.session.accounts, maybePaymentStrategy ) of
+                ( Just accounts, Just paymentStrategy ) ->
+                    div [] [ chart accounts paymentStrategy ]
+
+                _ ->
+                    viewEmpty
     in
         section [ class "o-payment-strategy" ]
             [ header [ class "text-center" ]
@@ -837,15 +870,42 @@ viewPaymentStrategyContent model =
                 [ h3 [ class "text-center text-danger display-4 mb-4" ]
                     [ text (toCurrency (totalDebtAmount model))
                     ]
-                , div [ class "d-flex mt-4" ]
-                    [ button
-                        [ class "btn btn-outline-dark mr-auto"
-                        , onClick GoToPaymentStrategies
-                        ]
-                        [ text "Back" ]
-                    ]
+                , paymentChart
+                , footer
                 ]
             ]
+
+
+chart : List Account -> PaymentStrategy -> Html Msg
+chart accounts paymentStrategy =
+    let
+        dots =
+            [ LineChart.Dots.diamond
+            , LineChart.Dots.circle
+            , LineChart.Dots.triangle
+            , LineChart.Dots.square
+            , LineChart.Dots.plus
+            , LineChart.Dots.cross
+            ]
+    in
+        LineChart.viewCustom (chartConfig paymentStrategy)
+            (paymentStrategy.schedules
+                |> List.map
+                    (\schedule ->
+                        let
+                            account =
+                                accounts
+                                    |> List.filter (\a -> a.id == schedule.accountId)
+                                    |> List.head
+                                    |> Maybe.withDefault (Account.init schedule.accountId)
+                        in
+                            LineChart.line
+                                LineChart.Colors.pink
+                                (List.head dots |> Maybe.withDefault LineChart.Dots.plus)
+                                account.name
+                                schedule.payments
+                    )
+            )
 
 
 viewError : Model -> Html Msg
@@ -957,3 +1017,45 @@ totalDebtAmount model =
         |> Maybe.withDefault []
         |> List.map .balance
         |> List.sum
+
+
+
+-- CHART CONFIG
+
+
+chartConfig : PaymentStrategy -> LineChart.Config Payment msg
+chartConfig paymentStrategy =
+    { y = LineChart.Axis.default 450 "balance" (\p -> (abs (toFloat p.balance) / 1000))
+    , x = LineChart.Axis.time 1270 "date" (\p -> toFloat p.number)
+    , container = containerConfig
+    , interpolation = LineChart.Interpolation.linear
+    , intersection = LineChart.Axis.Intersection.default
+    , legends = LineChart.Legends.default
+    , events = LineChart.Events.default
+    , area = LineChart.Area.default
+    , grid = LineChart.Grid.default
+    , line = LineChart.Line.default
+    , dots = LineChart.Dots.custom (LineChart.Dots.empty 5 1)
+    , junk = LineChart.Junk.default
+    }
+
+
+containerConfig : LineChart.Container.Config msg
+containerConfig =
+    LineChart.Container.custom
+        { attributesHtml = []
+        , attributesSvg = []
+        , size = LineChart.Container.relative
+        , margin = LineChart.Container.Margin 30 100 30 70
+        , id = "line-chart-area"
+        }
+
+
+formatY : Payment -> String
+formatY payment =
+    toCurrency payment.balance
+
+
+round100 : Float -> Float
+round100 float =
+    toFloat (round (float * 100)) / 100
