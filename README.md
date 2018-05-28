@@ -2,22 +2,11 @@
 
 ## TODO
 
-* calculate current screen from model
-* load budgets if not available - fire when setting the screen?
 * extract action footer to function
 * add reset button to error screen
 
 ### Alpha Release
 
-* choose a budget
-* choose your accounts
-* debt details
-* debt payment categories
-* debt strategies
-  * [ ] highest interest rate first
-  * [ ] lowest interest rate first
-  * [ ] Balance/Min Payment Ratio
-  * [ ] Minimum Payment Only
 * debt strategy details
 * "start over" button
 
@@ -44,6 +33,7 @@
 * [ ] remove unused css from bootstrap
 * [ ] transform png logo with svg and remove margin
 * [ ] update to [webpack-serve](https://github.com/webpack-contrib/webpack-serve)
+* [ ] add minimum payment strategy
 
 ## Links
 
