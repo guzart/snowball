@@ -10,7 +10,7 @@ type alias DebtDetail =
     { accountId : String
     , balance : Int
     , rate : Float
-    , minPayment : Float
+    , minPayment : Int
     }
 
 
@@ -33,7 +33,7 @@ decoder =
         |> required "accountId" Decode.string
         |> required "balance" Decode.int
         |> required "rate" Decode.float
-        |> required "minPayment" Decode.float
+        |> required "minPayment" Decode.int
 
 
 encode : DebtDetail -> Value
@@ -42,5 +42,5 @@ encode debtDetail =
         [ "accountId" => Encode.string debtDetail.accountId
         , "balance" => Encode.int debtDetail.balance
         , "rate" => Encode.float debtDetail.rate
-        , "minPayment" => Encode.float debtDetail.minPayment
+        , "minPayment" => Encode.int debtDetail.minPayment
         ]

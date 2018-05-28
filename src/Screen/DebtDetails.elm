@@ -74,7 +74,7 @@ initFromDebtDetail debtDetail =
     , balance = debtDetail.balance
     , errors = []
     , rate = toString debtDetail.rate
-    , minPayment = toString debtDetail.minPayment
+    , minPayment = toString ((toFloat debtDetail.minPayment) / 1000)
     }
 
 
@@ -391,7 +391,7 @@ buildDebtDetails model =
                 let
                     ( maybeRate, maybeMinPayment ) =
                         ( String.toFloat de.rate |> Result.toMaybe
-                        , String.toFloat de.minPayment |> Result.toMaybe
+                        , String.toFloat de.minPayment |> Result.toMaybe |> Maybe.map (\v -> round (v * 1000))
                         )
                 in
                     case ( maybeRate, maybeMinPayment ) of

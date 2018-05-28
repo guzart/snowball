@@ -5,7 +5,9 @@ import Data.Account exposing (Account)
 import Data.Budget exposing (Budget)
 import Data.CategoryGroup exposing (CategoryGroup)
 import Data.Category exposing (Category)
+import Data.PaymentStrategy as PaymentStrategy exposing (PaymentStrategy)
 import Data.Session as Session exposing (Session)
+import Dict
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -96,6 +98,7 @@ type alias Model =
     , categoryGroups : Maybe (List CategoryGroup)
     , categories : Maybe (List Category)
     , debtDetails : DebtDetails.Model
+    , paymentStrategies : Maybe (List PaymentStrategy)
     }
 
 
@@ -112,6 +115,7 @@ modelInitialValue =
     , categoryGroups = Nothing
     , categories = Nothing
     , debtDetails = DebtDetails.init Nothing
+    , paymentStrategies = Nothing
     }
 
 
@@ -397,6 +401,31 @@ loadScreenData model =
                     ( { model | isLoadingScreenData = True }
                     , CategoryGroupRequest.list model.apiUrl model.session.token budget.id
                         |> Http.send HandleCategoriesResponse
+                    )
+
+        PaymentStrategiesScreen ->
+            case ( model.session.debtDetails, model.session.category ) of
+                ( Just debtDetails, Just category ) ->
+                    if Dict.isEmpty debtDetails then
+                        { model | errorMessage = Just "Something went wrong, we couldn't find your selected budget." }
+                            => Cmd.none
+                    else
+                        let
+                            monthlyPayment =
+                                category.balance
+
+                            details =
+                                Dict.values debtDetails
+
+                            newPaymentStrategies =
+                                [ PaymentStrategy.initHighInterestFirst details monthlyPayment
+                                ]
+                        in
+                            { model | paymentStrategies = Just newPaymentStrategies } => Cmd.none
+
+                _ ->
+                    ( { model | errorMessage = Just "Something went wrong, we couldn't find your selected budget." }
+                    , Cmd.none
                     )
 
         _ ->
