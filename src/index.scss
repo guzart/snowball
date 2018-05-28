@@ -127,6 +127,22 @@ $enable-shadows: true;
     margin: auto;
     max-width: 30rem;
   }
+
+  .list-group-item {
+    cursor: pointer;
+
+    &:hover {
+      background-color: $gray-200;
+      transition: background-color 0.2s ease;
+    }
+  }
+}
+
+.o-payment-strategy {
+  section {
+    margin: auto;
+    max-width: 30rem;
+  }
 }
 
 .o-site-footer {

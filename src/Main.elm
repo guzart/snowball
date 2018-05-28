@@ -99,6 +99,7 @@ type alias Model =
     , categories : Maybe (List Category)
     , debtDetails : DebtDetails.Model
     , paymentStrategies : Maybe (List PaymentStrategy)
+    , currentPaymentStrategy : Maybe PaymentStrategy
     }
 
 
@@ -116,6 +117,7 @@ modelInitialValue =
     , categories = Nothing
     , debtDetails = DebtDetails.init Nothing
     , paymentStrategies = Nothing
+    , currentPaymentStrategy = Nothing
     }
 
 
@@ -126,7 +128,7 @@ type Screen
     | DebtDetailsScreen
     | ChooseCategoryScreen
     | PaymentStrategiesScreen
-    | DebtStrategyScreen
+    | PaymentStrategyScreen
     | ErrorScreen
 
 
@@ -180,7 +182,7 @@ type Msg
     | GoToDebtDetails
     | GoToChooseCategory
     | GoToPaymentStrategies
-    | GoToPaymentStrategy
+    | GoToPaymentStrategy PaymentStrategy
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -351,13 +353,21 @@ update msg model =
                 ( newModel, newCmd ) =
                     loadScreenData { model | currentScreen = ChooseCategoryScreen }
             in
-                ( newModel, Cmd.batch [ saveSession newModel.session, newCmd ] )
+                newModel => Cmd.batch [ saveSession newModel.session, newCmd ]
 
         GoToPaymentStrategies ->
-            ( { model | currentScreen = PaymentStrategiesScreen }, saveSession model.session )
+            let
+                ( newModel, newCmd ) =
+                    loadScreenData { model | currentScreen = PaymentStrategiesScreen }
+            in
+                newModel => Cmd.batch [ saveSession model.session, newCmd ]
 
-        GoToPaymentStrategy ->
-            ( model, Cmd.none )
+        GoToPaymentStrategy paymentStrategy ->
+            { model
+                | currentScreen = PaymentStrategyScreen
+                , currentPaymentStrategy = Just paymentStrategy
+            }
+                => Cmd.none
 
 
 saveSession : Session -> Cmd msg
@@ -404,8 +414,8 @@ loadScreenData model =
                     )
 
         PaymentStrategiesScreen ->
-            case ( model.session.debtDetails, model.session.category ) of
-                ( Just debtDetails, Just category ) ->
+            case ( model.session.category, model.session.debtDetails ) of
+                ( Just category, Just debtDetails ) ->
                     if Dict.isEmpty debtDetails then
                         { model | errorMessage = Just "Something went wrong, we couldn't find your selected budget." }
                             => Cmd.none
@@ -423,13 +433,25 @@ loadScreenData model =
                                 , PaymentStrategy.initLowestBalanceFirst details monthlyPayment
                                 , PaymentStrategy.initHighestBalanceFirst details monthlyPayment
                                 ]
+                                    |> List.sortWith
+                                        (\a b ->
+                                            case (compare b.months a.months) of
+                                                EQ ->
+                                                    compare b.interest a.interest
+
+                                                LT ->
+                                                    LT
+
+                                                GT ->
+                                                    GT
+                                        )
+                                    |> List.reverse
                         in
                             { model | paymentStrategies = Just newPaymentStrategies } => Cmd.none
 
                 _ ->
-                    ( { model | errorMessage = Just "Something went wrong, we couldn't find your selected budget." }
-                    , Cmd.none
-                    )
+                    { model | errorMessage = Just "Something went wrong, we couldn't find your selected budget." }
+                        => Cmd.none
 
         _ ->
             ( model, Cmd.none )
@@ -477,6 +499,9 @@ view model =
 
         PaymentStrategiesScreen ->
             viewPaymentStrategies model
+
+        PaymentStrategyScreen ->
+            viewPaymentStrategy model
 
         _ ->
             viewError model
@@ -737,12 +762,6 @@ viewPaymentStrategiesContent model =
             model.session.budget
                 |> Maybe.map .name
                 |> Maybe.withDefault ""
-
-        totalDebtAmount =
-            model.session.accounts
-                |> Maybe.withDefault []
-                |> List.map .balance
-                |> List.sum
     in
         section [ class "o-payment-strategies" ]
             [ header [ class "text-center" ]
@@ -750,8 +769,8 @@ viewPaymentStrategiesContent model =
                 , h2 [ class "h4" ] [ text "Payment Strategies" ]
                 ]
             , section [ class "py-4" ]
-                [ h3 [ class "text-center text-danger display-4" ]
-                    [ text (toCurrency totalDebtAmount)
+                [ h3 [ class "text-center text-danger display-4 mb-4" ]
+                    [ text (toCurrency (totalDebtAmount model))
                     ]
                 , viewPaymentStrategiesList model.paymentStrategies
                 , div [ class "d-flex mt-4" ]
@@ -777,11 +796,12 @@ viewPaymentStrategiesList maybePaymentStrategies =
                     (\paymentStrategy ->
                         div
                             [ class "list-group-item d-flex"
+                            , onClick (GoToPaymentStrategy paymentStrategy)
                             ]
                             [ div [ class "mr-auto" ]
                                 [ h5 [ class "mb-0" ] [ text paymentStrategy.name ]
                                 , small [ class "text-uppercase text-muted font-weight-light" ]
-                                    [ text ("Interests " ++ (toCurrency paymentStrategy.interest)) ]
+                                    [ text ("Interest Paid " ++ (toCurrency paymentStrategy.interest)) ]
                                 ]
                             , div
                                 [ class "align-self-center font-weight-bold"
@@ -791,6 +811,41 @@ viewPaymentStrategiesList maybePaymentStrategies =
                     )
                     paymentStrategies
                 )
+
+
+viewPaymentStrategy : Model -> Html Msg
+viewPaymentStrategy model =
+    viewScreen viewPaymentStrategyContent model
+
+
+viewPaymentStrategyContent : Model -> Html Msg
+viewPaymentStrategyContent model =
+    let
+        paymentStrategy =
+            model.currentPaymentStrategy
+
+        title =
+            paymentStrategy
+                |> Maybe.map .name
+                |> Maybe.withDefault "Payment Strategy Not Found"
+    in
+        section [ class "o-payment-strategy" ]
+            [ header [ class "text-center" ]
+                [ h1 [] [ text title ]
+                ]
+            , section [ class "py-4" ]
+                [ h3 [ class "text-center text-danger display-4 mb-4" ]
+                    [ text (toCurrency (totalDebtAmount model))
+                    ]
+                , div [ class "d-flex mt-4" ]
+                    [ button
+                        [ class "btn btn-outline-dark mr-auto"
+                        , onClick GoToPaymentStrategies
+                        ]
+                        [ text "Back" ]
+                    ]
+                ]
+            ]
 
 
 viewError : Model -> Html Msg
@@ -894,3 +949,11 @@ findCategoryGroup maybeCategoryGroups categoryGroupId =
             categoryGroups
                 |> List.filter (\cg -> cg.id == categoryGroupId)
                 |> List.head
+
+
+totalDebtAmount : Model -> Int
+totalDebtAmount model =
+    model.session.accounts
+        |> Maybe.withDefault []
+        |> List.map .balance
+        |> List.sum
