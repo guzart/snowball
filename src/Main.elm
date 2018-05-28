@@ -419,6 +419,9 @@ loadScreenData model =
 
                             newPaymentStrategies =
                                 [ PaymentStrategy.initHighInterestFirst details monthlyPayment
+                                , PaymentStrategy.initLowestInterestFirst details monthlyPayment
+                                , PaymentStrategy.initLowestBalanceFirst details monthlyPayment
+                                , PaymentStrategy.initHighestBalanceFirst details monthlyPayment
                                 ]
                         in
                             { model | paymentStrategies = Just newPaymentStrategies } => Cmd.none
@@ -750,6 +753,7 @@ viewPaymentStrategiesContent model =
                 [ h3 [ class "text-center text-danger display-4" ]
                     [ text (toCurrency totalDebtAmount)
                     ]
+                , viewPaymentStrategiesList model.paymentStrategies
                 , div [ class "d-flex mt-4" ]
                     [ button
                         [ class "btn btn-outline-dark mr-auto"
@@ -759,6 +763,34 @@ viewPaymentStrategiesContent model =
                     ]
                 ]
             ]
+
+
+viewPaymentStrategiesList : Maybe (List PaymentStrategy) -> Html Msg
+viewPaymentStrategiesList maybePaymentStrategies =
+    case maybePaymentStrategies of
+        Nothing ->
+            p [ class "text-center" ] [ text "No payment strategies." ]
+
+        Just paymentStrategies ->
+            div [ class "list-group" ]
+                (List.map
+                    (\paymentStrategy ->
+                        div
+                            [ class "list-group-item d-flex"
+                            ]
+                            [ div [ class "mr-auto" ]
+                                [ h5 [ class "mb-0" ] [ text paymentStrategy.name ]
+                                , small [ class "text-uppercase text-muted font-weight-light" ]
+                                    [ text ("Interests " ++ (toCurrency paymentStrategy.interest)) ]
+                                ]
+                            , div
+                                [ class "align-self-center font-weight-bold"
+                                ]
+                                [ text ((toString paymentStrategy.months) ++ " months") ]
+                            ]
+                    )
+                    paymentStrategies
+                )
 
 
 viewError : Model -> Html Msg

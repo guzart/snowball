@@ -1,4 +1,4 @@
-module Data.PaymentStrategy exposing (PaymentStrategy, initHighInterestFirst)
+module Data.PaymentStrategy exposing (PaymentStrategy, initHighestBalanceFirst, initHighInterestFirst, initLowestBalanceFirst, initLowestInterestFirst)
 
 import Data.DebtDetail exposing (DebtDetail)
 
@@ -30,6 +30,16 @@ type alias Payment =
     }
 
 
+initHighestBalanceFirst : List DebtDetail -> Int -> PaymentStrategy
+initHighestBalanceFirst debtDetails monthlyAmount =
+    let
+        sortedDetails =
+            debtDetails
+                |> List.sortBy .balance
+    in
+        initPaymentStrategy "Highest Balance First" sortedDetails monthlyAmount
+
+
 initHighInterestFirst : List DebtDetail -> Int -> PaymentStrategy
 initHighInterestFirst debtDetails monthlyAmount =
     let
@@ -37,11 +47,38 @@ initHighInterestFirst debtDetails monthlyAmount =
             debtDetails
                 |> List.sortBy .rate
                 |> List.reverse
+    in
+        initPaymentStrategy "Highest Interest First" sortedDetails monthlyAmount
 
+
+initLowestBalanceFirst : List DebtDetail -> Int -> PaymentStrategy
+initLowestBalanceFirst debtDetails monthlyAmount =
+    let
+        sortedDetails =
+            debtDetails
+                |> List.sortBy .balance
+                |> List.reverse
+    in
+        initPaymentStrategy "Lowest Balance First" sortedDetails monthlyAmount
+
+
+initLowestInterestFirst : List DebtDetail -> Int -> PaymentStrategy
+initLowestInterestFirst debtDetails monthlyAmount =
+    let
+        sortedDetails =
+            debtDetails
+                |> List.sortBy .rate
+    in
+        initPaymentStrategy "Lowest Interest First" sortedDetails monthlyAmount
+
+
+initPaymentStrategy : String -> List DebtDetail -> Int -> PaymentStrategy
+initPaymentStrategy name debtDetails monthlyAmount =
+    let
         schedules =
             generateSchedules monthlyAmount (initSchedules debtDetails) 0
     in
-        { name = "High Interest First"
+        { name = name
         , months = List.maximum (List.map .totalMonths schedules) |> Maybe.withDefault 0
         , interest = List.maximum (List.map .totalInterest schedules) |> Maybe.withDefault 0
         , schedules = schedules
@@ -141,7 +178,7 @@ applyPaymentToSchedule amount schedule =
             round (schedule.rate * 1000 / 12)
 
         interest =
-            round (toFloat ((abs schedule.balance) * periodRate) / 1000)
+            round (toFloat ((abs schedule.balance) * periodRate) / 100000)
 
         payment =
             { amount = amount
