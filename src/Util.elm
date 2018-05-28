@@ -18,7 +18,7 @@ toCurrency amount =
             if (String.length cents) == 1 then
                 "0" ++ cents
             else
-                cents
+                String.slice 0 2 cents
 
         dollarsFormatted =
             (toString (abs (amount // 1000)))
