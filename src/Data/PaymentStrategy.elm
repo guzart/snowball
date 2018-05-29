@@ -176,6 +176,6 @@ applyPaymentToSchedule amount schedule =
         { schedule
             | balance = payment.balance
             , totalInterest = schedule.totalInterest + payment.interest
-            , totalMonths = schedule.totalMonths + 1
+            , totalMonths = payment.number
             , payments = List.append schedule.payments [ payment ]
         }

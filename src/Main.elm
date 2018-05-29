@@ -1,5 +1,6 @@
 module Main exposing (Model, Msg, update, view, subscriptions, init)
 
+import Color
 import Data.AccessToken as AccessToken exposing (AccessToken(..), decoder)
 import Data.Account as Account exposing (Account)
 import Data.Budget exposing (Budget)
@@ -115,6 +116,7 @@ type alias Model =
     , paymentStrategies : Maybe (List PaymentStrategy)
     , currentPaymentStrategy : Maybe PaymentStrategy
     , today : Maybe Date
+    , chartHintedPayments : List Payment
     }
 
 
@@ -134,6 +136,7 @@ modelInitialValue =
     , paymentStrategies = Nothing
     , currentPaymentStrategy = Nothing
     , today = Nothing
+    , chartHintedPayments = []
     }
 
 
@@ -193,6 +196,7 @@ type Msg
     | ToggleAccount Account
     | DebtDetailsMsg DebtDetails.Msg
     | SelectCategory (Maybe Category)
+    | ChartHint (List Payment)
     | GoToChooseBudget
     | GoToChooseAccounts
     | GoToDebtDetails
@@ -336,7 +340,10 @@ update msg model =
                 newModel => Cmd.batch [ modelScreenCmd, Cmd.map DebtDetailsMsg screenCmd, newCmd ]
 
         SelectCategory maybeCategory ->
-            ( { model | session = Session.setCategory maybeCategory model.session }, Cmd.none )
+            { model | session = Session.setCategory maybeCategory model.session } => Cmd.none
+
+        ChartHint payments ->
+            { model | chartHintedPayments = payments } => Cmd.none
 
         GoToChooseBudget ->
             loadScreenData { model | currentScreen = ChooseBudgetScreen }
@@ -845,19 +852,10 @@ viewPaymentStrategyContent model =
                 |> Maybe.map .name
                 |> Maybe.withDefault "Payment Strategy Not Found"
 
-        footer =
-            div [ class "d-flex mt-4" ]
-                [ button
-                    [ class "btn btn-outline-dark mr-auto"
-                    , onClick GoToPaymentStrategies
-                    ]
-                    [ text "Back" ]
-                ]
-
         paymentChart =
             case ( model.session.accounts, maybePaymentStrategy ) of
                 ( Just accounts, Just paymentStrategy ) ->
-                    div [] [ chart accounts paymentStrategy ]
+                    div [] [ chart accounts paymentStrategy model.chartHintedPayments ]
 
                 _ ->
                     viewEmpty
@@ -867,17 +865,54 @@ viewPaymentStrategyContent model =
                 [ h1 [] [ text title ]
                 ]
             , section [ class "py-4" ]
-                [ h3 [ class "text-center text-danger display-4 mb-4" ]
-                    [ text (toCurrency (totalDebtAmount model))
+                [ paymentChart
+                , footer [ class "d-flex mt-4" ]
+                    [ button
+                        [ class "btn btn-outline-dark mr-auto"
+                        , onClick GoToPaymentStrategies
+                        ]
+                        [ text "Back" ]
                     ]
-                , paymentChart
-                , footer
                 ]
             ]
 
 
-chart : List Account -> PaymentStrategy -> Html Msg
-chart accounts paymentStrategy =
+chart : List Account -> PaymentStrategy -> List Payment -> Html Msg
+chart accounts paymentStrategy chartedHintedPayments =
+    let
+        linesCount =
+            List.length paymentStrategy.schedules
+
+        colors =
+            lineChartColors linesCount
+
+        dots =
+            lineChartDots linesCount
+    in
+        LineChart.viewCustom (chartConfig paymentStrategy chartedHintedPayments)
+            (paymentStrategy.schedules
+                |> List.map3
+                    (\color dot schedule ->
+                        let
+                            account =
+                                accounts
+                                    |> List.filter (\a -> a.id == schedule.accountId)
+                                    |> List.head
+                                    |> Maybe.withDefault (Account.init schedule.accountId)
+                        in
+                            LineChart.line
+                                color
+                                dot
+                                account.name
+                                schedule.payments
+                    )
+                    colors
+                    dots
+            )
+
+
+lineChartDots : Int -> List LineChart.Dots.Shape
+lineChartDots count =
     let
         dots =
             [ LineChart.Dots.diamond
@@ -887,25 +922,35 @@ chart accounts paymentStrategy =
             , LineChart.Dots.plus
             , LineChart.Dots.cross
             ]
+
+        repeatCount =
+            Basics.min 1 (round ((toFloat count) / (List.length dots |> toFloat)))
     in
-        LineChart.viewCustom (chartConfig paymentStrategy)
-            (paymentStrategy.schedules
-                |> List.map
-                    (\schedule ->
-                        let
-                            account =
-                                accounts
-                                    |> List.filter (\a -> a.id == schedule.accountId)
-                                    |> List.head
-                                    |> Maybe.withDefault (Account.init schedule.accountId)
-                        in
-                            LineChart.line
-                                LineChart.Colors.pink
-                                (List.head dots |> Maybe.withDefault LineChart.Dots.plus)
-                                account.name
-                                schedule.payments
-                    )
-            )
+        List.repeat repeatCount dots
+            |> List.concat
+            |> List.take count
+
+
+lineChartColors : Int -> List Color.Color
+lineChartColors count =
+    let
+        colors =
+            [ LineChart.Colors.pink
+            , LineChart.Colors.blue
+            , LineChart.Colors.purple
+            , LineChart.Colors.red
+            , LineChart.Colors.gold
+            , LineChart.Colors.cyan
+            , LineChart.Colors.green
+            , LineChart.Colors.teal
+            ]
+
+        repeatCount =
+            round ((toFloat count) / (toFloat (List.length colors)))
+    in
+        List.repeat (Basics.max 1 repeatCount) colors
+            |> List.concat
+            |> List.take count
 
 
 viewError : Model -> Html Msg
@@ -1023,32 +1068,26 @@ totalDebtAmount model =
 -- CHART CONFIG
 
 
-chartConfig : PaymentStrategy -> LineChart.Config Payment msg
-chartConfig paymentStrategy =
-    { y = LineChart.Axis.default 450 "balance" (\p -> (abs (toFloat p.balance) / 1000))
-    , x = LineChart.Axis.time 1270 "date" (\p -> toFloat p.number)
+chartConfig : PaymentStrategy -> List Payment -> LineChart.Config Payment Msg
+chartConfig paymentStrategy hintedPayments =
+    { y = LineChart.Axis.default 450 "balance" (\p -> (toFloat p.balance) / 1000)
+    , x = LineChart.Axis.default 1270 "month" (.number >> toFloat)
     , container = containerConfig
     , interpolation = LineChart.Interpolation.linear
     , intersection = LineChart.Axis.Intersection.default
     , legends = LineChart.Legends.default
-    , events = LineChart.Events.default
+    , events = LineChart.Events.hoverMany ChartHint
     , area = LineChart.Area.default
-    , grid = LineChart.Grid.default
+    , grid = LineChart.Grid.dots 1 LineChart.Colors.gray
     , line = LineChart.Line.default
     , dots = LineChart.Dots.custom (LineChart.Dots.empty 5 1)
-    , junk = LineChart.Junk.default
+    , junk = LineChart.Junk.hoverMany hintedPayments formatX formatY
     }
 
 
-containerConfig : LineChart.Container.Config msg
-containerConfig =
-    LineChart.Container.custom
-        { attributesHtml = []
-        , attributesSvg = []
-        , size = LineChart.Container.relative
-        , margin = LineChart.Container.Margin 30 100 30 70
-        , id = "line-chart-area"
-        }
+formatX : Payment -> String
+formatX payment =
+    "Month " ++ (toString payment.number)
 
 
 formatY : Payment -> String
@@ -1056,6 +1095,12 @@ formatY payment =
     toCurrency payment.balance
 
 
-round100 : Float -> Float
-round100 float =
-    toFloat (round (float * 100)) / 100
+containerConfig : LineChart.Container.Config Msg
+containerConfig =
+    LineChart.Container.custom
+        { attributesHtml = []
+        , attributesSvg = []
+        , size = LineChart.Container.relative
+        , margin = LineChart.Container.Margin 32 192 32 96
+        , id = "line-chart-area"
+        }
