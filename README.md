@@ -2,13 +2,11 @@
 
 ## TODO
 
-* extract action footer to function
-* add reset button to error screen
-
 ### Alpha Release
 
-* debt strategy details
-* "start over" button
+* [ ] "start over" button
+* [ ] extract action footer to function
+* [ ] add reset button to error screen
 
 ### Beta Release
 
