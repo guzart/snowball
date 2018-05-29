@@ -1,11 +1,7 @@
 {
-  "[json]": {
-    "editor.formatOnSave": false,
-    "editor.quickSuggestions": {
-      "strings": true
-    }
+  "[scss]": {
+    "editor.formatOnSave": true
   },
   "editor.formatOnSave": true,
-  "prettier.semi": false,
-  "prettier.singleQuote": true
+  "sasslint.enable": true
 }

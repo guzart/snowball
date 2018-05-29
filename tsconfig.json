@@ -1,28 +1,14 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": false,
-    "baseUrl": ".",
-    "jsx": "preserve",
-    "lib": ["dom", "es2015"],
-    "module": "es2015",
+    "module": "es6",
     "moduleResolution": "node",
+    "lib": ["dom", "es6", "dom.iterable", "scripthost", "es2017.object"],
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "paths": {
-      "@/*": ["src/*"]
-    },
     "sourceMap": true,
-    "strict": true,
-    "target": "es5",
-    "typeRoots": ["node_modules/@types", "./typings"],
-    "types": ["node"]
-  },
-  "include": [
-    "proxy.ts",
-    "src/**/*.ts",
-    "src/**/*.vue",
-    "test/**/*.ts",
-    "typings/**/*.d.ts"
-  ],
-  "exclude": ["node_modules"]
+    "strictNullChecks": true,
+    "target": "es5"
+  }
 }

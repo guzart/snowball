@@ -1,0 +1,79 @@
+{
+    meta: {
+        createdAt: "2018-05-07T03:20:05.209Z",
+        host: "https://api.youneedabudget.com/v1"
+    },
+    req: {
+        url: "/budgets/2a33261d-a1ae-4dff-820d-c57202e65cd5/accounts",
+        method: "GET",
+        headers: {
+            connection: "keep-alive",
+            origin: "https://snowball.guzart.com:8080",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36",
+            accept: "*/*",
+            "accept-encoding": "gzip, deflate, br",
+            "accept-language": "en,es;q=0.9,en-US;q=0.8,es-419;q=0.7"
+        },
+        body: ""
+    },
+    res: {
+        status: 200,
+        headers: {
+            server: [
+                "Cowboy"
+            ],
+            date: [
+                "Mon, 07 May 2018 03:20:05 GMT"
+            ],
+            connection: [
+                "keep-alive"
+            ],
+            "content-type": [
+                "application/json; charset=utf-8"
+            ],
+            "x-rate-limit": [
+                "1/200"
+            ],
+            vary: [
+                "Accept-Encoding, Origin"
+            ],
+            "content-encoding": [
+                "gzip"
+            ],
+            etag: [
+                "W/\"3cc3df8686d47016c91460787fe43b0c\""
+            ],
+            "cache-control": [
+                "max-age=0, private, must-revalidate"
+            ],
+            "x-request-id": [
+                "b1121bbc-021c-4abd-878a-4093f5279e03"
+            ],
+            "x-runtime": [
+                "0.092398"
+            ],
+            "access-control-allow-origin": [
+                "https://snowball.guzart.com:8080"
+            ],
+            "access-control-allow-methods": [
+                "GET, POST, PUT, OPTIONS"
+            ],
+            "access-control-max-age": [
+                "1728000"
+            ],
+            "access-control-allow-credentials": [
+                "true"
+            ],
+            "strict-transport-security": [
+                "max-age=15552000"
+            ],
+            "transfer-encoding": [
+                "chunked"
+            ],
+            via: [
+                "1.1 vegur"
+            ]
+        },
+        body: "H4sIAOXF71oAA2yNwQrCMBBE/2XPDSRUSs1veBQp282mFOJGmkSQ0H83BfGic5s3M0wFhxnBVkCiWCQnsNcKqwML/YCGfe+Vd8ark0ZW82hIDeydpnHUZ0PQgeCdW/uCz1WW1EB+PQ6QviDKNBe3cAabt8IdUIiJ24XHkJqVmNtASggdzBhQqNlef3TUGTd207+syE+q99u+vwEAAP//AwA0FvmW2QAAAA=="
+    }
+}
