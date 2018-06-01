@@ -4,8 +4,6 @@ import Color
 import Data.AccessToken as AccessToken exposing (AccessToken(..), decoder)
 import Data.Account as Account exposing (Account)
 import Data.Budget exposing (Budget)
-import Data.CategoryGroup exposing (CategoryGroup)
-import Data.Category exposing (Category)
 import Data.PaymentStrategy as PaymentStrategy exposing (PaymentStrategy, Payment)
 import Data.Session as Session exposing (Session)
 import Date exposing (Date)
@@ -32,7 +30,6 @@ import LineChart.Line
 import Ports
 import Request.Account as AccountRequest
 import Request.Budget as BudgetRequest
-import Request.CategoryGroup as CategoryGroupRequest
 import Screen.DebtDetails as DebtDetails
 import Views.Assets exposing (assets)
 import Views.Footer as Footer
@@ -110,9 +107,8 @@ type alias Model =
     , session : Session
     , budgets : Maybe (List Budget)
     , accounts : Maybe (List Account)
-    , categoryGroups : Maybe (List CategoryGroup)
-    , categories : Maybe (List Category)
     , debtDetails : DebtDetails.Model
+    , amount : Maybe String
     , paymentStrategies : Maybe (List PaymentStrategy)
     , currentPaymentStrategy : Maybe PaymentStrategy
     , today : Maybe Date
@@ -130,9 +126,8 @@ modelInitialValue =
     , session = Session.empty
     , budgets = Nothing
     , accounts = Nothing
-    , categoryGroups = Nothing
-    , categories = Nothing
     , debtDetails = DebtDetails.init Nothing
+    , amount = Nothing
     , paymentStrategies = Nothing
     , currentPaymentStrategy = Nothing
     , today = Nothing
@@ -145,7 +140,6 @@ type Screen
     | ChooseBudgetScreen
     | ChooseAccountsScreen
     | DebtDetailsScreen
-    | ChooseCategoryScreen
     | PaymentStrategiesScreen
     | PaymentStrategyScreen
     | ErrorScreen
@@ -173,12 +167,7 @@ screenFromSession session =
                                     DebtDetailsScreen
 
                                 Just _ ->
-                                    case session.category of
-                                        Nothing ->
-                                            ChooseCategoryScreen
-
-                                        Just _ ->
-                                            PaymentStrategiesScreen
+                                    PaymentStrategiesScreen
 
 
 
@@ -189,18 +178,17 @@ type Msg
     = RequestAccessToken
     | UpdateAccessToken (Maybe AccessToken)
     | Disconnect
+    | StartOver
     | HandleBudgetsResponse (Result Http.Error (List Budget))
     | HandleAccountsResponse (Result Http.Error (List Account))
-    | HandleCategoriesResponse (Result Http.Error (List CategoryGroup))
     | SelectBudget (Maybe Budget)
     | ToggleAccount Account
     | DebtDetailsMsg DebtDetails.Msg
-    | SelectCategory (Maybe Category)
+    | SetAmount (Maybe Int)
     | ChartHint (List Payment)
     | GoToChooseBudget
     | GoToChooseAccounts
     | GoToDebtDetails
-    | GoToChooseCategory
     | GoToPaymentStrategies
     | GoToPaymentStrategy PaymentStrategy
 
@@ -235,9 +223,18 @@ update msg model =
                     model.session
                         |> Session.setToken Nothing
             in
-                ( { model | session = newSession, currentScreen = WelcomeScreen }
-                , saveSession newSession
-                )
+                { model | session = newSession, currentScreen = WelcomeScreen } => saveSession newSession
+
+        StartOver ->
+            let
+                newSession =
+                    Session.setBudget Nothing model.session
+            in
+                loadScreenData
+                    { model
+                        | session = newSession
+                        , currentScreen = screenFromSession newSession
+                    }
 
         HandleBudgetsResponse result ->
             case result of
@@ -280,34 +277,6 @@ update msg model =
                     , Cmd.none
                     )
 
-        HandleCategoriesResponse result ->
-            case result of
-                Ok categoryGroups ->
-                    ( { model
-                        | categoryGroups = Just categoryGroups
-                        , categories =
-                            categoryGroups
-                                |> List.filter (.hidden >> not)
-                                |> List.map .categories
-                                |> List.concat
-                                |> List.filter (.hidden >> not)
-                                |> Just
-                        , isLoadingScreenData = False
-                        , errorMessage = Nothing
-                      }
-                    , Cmd.none
-                    )
-
-                Err _ ->
-                    ( { model
-                        | categoryGroups = Nothing
-                        , categories = Nothing
-                        , isLoadingScreenData = False
-                        , errorMessage = defaultErrorMessage
-                      }
-                    , Cmd.none
-                    )
-
         SelectBudget maybeBudget ->
             ( { model | session = Session.setBudget maybeBudget model.session }, Cmd.none )
 
@@ -334,7 +303,7 @@ update msg model =
                                         (DebtDetails.buildDebtDetails screenModel)
                                         model.session
                             in
-                                { model | currentScreen = ChooseCategoryScreen, session = nextSession }
+                                { model | currentScreen = PaymentStrategiesScreen, session = nextSession }
                                     => saveSession nextSession
 
                 ( newModel, newCmd ) =
@@ -342,8 +311,13 @@ update msg model =
             in
                 newModel => Cmd.batch [ modelScreenCmd, Cmd.map DebtDetailsMsg screenCmd, newCmd ]
 
-        SelectCategory maybeCategory ->
-            { model | session = Session.setCategory maybeCategory model.session } => Cmd.none
+        SetAmount maybeAmount ->
+            let
+                ( newModel, newCmd ) =
+                    loadScreenData
+                        { model | session = Session.setAmount maybeAmount model.session }
+            in
+                newModel => Cmd.batch [ saveSession newModel.session, newCmd ]
 
         ChartHint payments ->
             { model | chartHintedPayments = payments } => Cmd.none
@@ -374,19 +348,12 @@ update msg model =
             in
                 ( newModel, Cmd.batch [ saveSession newModel.session, newCmd ] )
 
-        GoToChooseCategory ->
-            let
-                ( newModel, newCmd ) =
-                    loadScreenData { model | currentScreen = ChooseCategoryScreen }
-            in
-                newModel => Cmd.batch [ saveSession newModel.session, newCmd ]
-
         GoToPaymentStrategies ->
             let
                 ( newModel, newCmd ) =
                     loadScreenData { model | currentScreen = PaymentStrategiesScreen }
             in
-                newModel => Cmd.batch [ saveSession model.session, newCmd ]
+                newModel => Cmd.batch [ saveSession newModel.session, newCmd ]
 
         GoToPaymentStrategy paymentStrategy ->
             { model
@@ -426,38 +393,25 @@ loadScreenData model =
                         |> Http.send HandleAccountsResponse
                     )
 
-        ChooseCategoryScreen ->
-            case model.session.budget of
-                Nothing ->
-                    ( { model | errorMessage = Just "Something went wrong, we couldn't find your selected budget." }
-                    , Cmd.none
-                    )
-
-                Just budget ->
-                    ( { model | isLoadingScreenData = True }
-                    , CategoryGroupRequest.list model.apiUrl model.session.token budget.id
-                        |> Http.send HandleCategoriesResponse
-                    )
-
         PaymentStrategiesScreen ->
-            case ( model.session.category, model.session.debtDetails ) of
-                ( Just category, Just debtDetails ) ->
+            case model.session.debtDetails of
+                Just debtDetails ->
                     if Dict.isEmpty debtDetails then
-                        { model | errorMessage = Just "Something went wrong, we couldn't find your selected budget." }
-                            => Cmd.none
+                        { model | currentScreen = ErrorScreen } => Cmd.none
                     else
                         let
-                            monthlyPayment =
-                                category.balance
+                            amount =
+                                model.session.amount
+                                    |> Maybe.withDefault (Session.minPaymentsTotal model.session)
 
                             details =
                                 Dict.values debtDetails
 
                             newPaymentStrategies =
-                                [ PaymentStrategy.initHighInterestFirst details monthlyPayment
-                                , PaymentStrategy.initLowestInterestFirst details monthlyPayment
-                                , PaymentStrategy.initLowestBalanceFirst details monthlyPayment
-                                , PaymentStrategy.initHighestBalanceFirst details monthlyPayment
+                                [ PaymentStrategy.initHighInterestFirst details amount
+                                , PaymentStrategy.initLowestInterestFirst details amount
+                                , PaymentStrategy.initLowestBalanceFirst details amount
+                                , PaymentStrategy.initHighestBalanceFirst details amount
                                 ]
                                     |> List.sortWith
                                         (\a b ->
@@ -476,11 +430,10 @@ loadScreenData model =
                             { model | paymentStrategies = Just newPaymentStrategies } => Cmd.none
 
                 _ ->
-                    { model | errorMessage = Just "Something went wrong, we couldn't find your selected budget." }
-                        => Cmd.none
+                    { model | currentScreen = ErrorScreen } => Cmd.none
 
         _ ->
-            ( model, Cmd.none )
+            model => Cmd.none
 
 
 defaultErrorMessage : Maybe String
@@ -519,9 +472,6 @@ view model =
 
         DebtDetailsScreen ->
             viewDebtDetails model
-
-        ChooseCategoryScreen ->
-            viewChooseCategory model
 
         PaymentStrategiesScreen ->
             viewPaymentStrategies model
@@ -707,76 +657,6 @@ viewDebtDetailsContent model =
         |> Html.map DebtDetailsMsg
 
 
-viewChooseCategory : Model -> Html Msg
-viewChooseCategory model =
-    viewScreen viewChooseCategoryContent model
-
-
-viewChooseCategoryContent : Model -> Html Msg
-viewChooseCategoryContent model =
-    let
-        isNextDisabled =
-            model.session.budget == Nothing
-
-        content =
-            loadingContent
-                "Loading budget categories..."
-                (div []
-                    [ (viewCategoriesList model.categoryGroups model.categories model.session.category)
-                    , div [ class "d-flex mt-4" ]
-                        [ button
-                            [ class "btn btn-outline-dark mr-auto"
-                            , onClick GoToDebtDetails
-                            ]
-                            [ text "Back" ]
-                        , button
-                            [ class "btn"
-                            , classList [ ( "btn-outline-primary", isNextDisabled ), ( "btn-primary", not isNextDisabled ) ]
-                            , disabled isNextDisabled
-                            , onClick GoToPaymentStrategies
-                            ]
-                            [ text "Next Step" ]
-                        ]
-                    ]
-                )
-                model.isLoadingScreenData
-    in
-        section [ class "o-choose-category" ]
-            [ header [ class "text-center" ] [ h1 [] [ text "Choose a Category" ] ]
-            , section [ class "py-4" ] [ content ]
-            ]
-
-
-viewCategoriesList : Maybe (List CategoryGroup) -> Maybe (List Category) -> Maybe Category -> Html Msg
-viewCategoriesList maybeCategoryGroups maybeCategories maybeSelectedCategory =
-    case maybeCategories of
-        Nothing ->
-            p [ class "text-center" ] [ text "No budget categories." ]
-
-        Just categories ->
-            div [ class "list-group" ]
-                (List.map
-                    (\category ->
-                        let
-                            categoryGroupName =
-                                findCategoryGroup maybeCategoryGroups category.categoryGroupId
-                                    |> Maybe.map .name
-                                    |> Maybe.withDefault ""
-                        in
-                            div
-                                [ class "list-group-item"
-                                , classList [ ( "selected", category.id == Maybe.withDefault "" (Maybe.map .id maybeSelectedCategory) ) ]
-                                , onClick (SelectCategory (Just category))
-                                ]
-                                [ h5 [ class "mb-0" ] [ text category.name ]
-                                , small [ class "text-muted font-weight-light" ]
-                                    [ text categoryGroupName ]
-                                ]
-                    )
-                    categories
-                )
-
-
 viewPaymentStrategies : Model -> Html Msg
 viewPaymentStrategies model =
     viewScreen viewPaymentStrategiesContent model
@@ -789,6 +669,12 @@ viewPaymentStrategiesContent model =
             model.session.budget
                 |> Maybe.map .name
                 |> Maybe.withDefault ""
+
+        amount =
+            model.session.amount
+                |> Maybe.withDefault (Session.minPaymentsTotal model.session)
+                |> toFloat
+                |> (\n -> n / 1000)
     in
         section [ class "o-payment-strategies" ]
             [ header [ class "text-center" ]
@@ -796,14 +682,39 @@ viewPaymentStrategiesContent model =
                 , h2 [ class "h4" ] [ text "Payment Strategies" ]
                 ]
             , section [ class "py-4" ]
-                [ h3 [ class "text-center text-danger display-4 mb-4" ]
+                [ p [ class "mb-0 text-center text-uppercase text-muted" ]
+                    [ small [] [ text "Total Debt" ] ]
+                , h3
+                    [ class "text-center text-danger display-4 mb-2" ]
                     [ text (toCurrency (totalDebtAmount model))
+                    ]
+                , p [ class "mb-0 text-center text-uppercase text-muted" ]
+                    [ small [] [ text "Debt Budget" ] ]
+                , h3
+                    [ class "text-center text-success display-4 mb-4 d-flex" ]
+                    [ span [] [ text "$ " ]
+                    , input
+                        [ type_ "number"
+                        , class "text-center text-success"
+                        , onInput
+                            (\v ->
+                                SetAmount
+                                    ((String.toFloat v)
+                                        |> Result.toMaybe
+                                        |> Maybe.map (\v -> round (v * 1000))
+                                    )
+                            )
+                        , Html.Attributes.min (toString amount)
+                        , step "10"
+                        , defaultValue (toString amount)
+                        ]
+                        []
                     ]
                 , viewPaymentStrategiesList model.paymentStrategies
                 , div [ class "d-flex mt-4" ]
                     [ button
                         [ class "btn btn-outline-dark mr-auto"
-                        , onClick GoToChooseCategory
+                        , onClick GoToDebtDetails
                         ]
                         [ text "Back" ]
                     ]
@@ -893,7 +804,7 @@ chart accounts paymentStrategy chartedHintedPayments =
         dots =
             lineChartDots linesCount
     in
-        LineChart.viewCustom (chartConfig paymentStrategy chartedHintedPayments)
+        LineChart.viewCustom (chartConfig chartedHintedPayments)
             (paymentStrategy.schedules
                 |> List.map3
                     (\color dot schedule ->
@@ -928,9 +839,9 @@ lineChartDots count =
             ]
 
         repeatCount =
-            Basics.min 1 (round ((toFloat count) / (List.length dots |> toFloat)))
+            round ((toFloat count) / (toFloat (List.length dots)))
     in
-        List.repeat repeatCount dots
+        List.repeat (Basics.max 1 repeatCount) dots
             |> List.concat
             |> List.take count
 
@@ -967,13 +878,21 @@ viewErrorContent model =
     section [ class "o-error-content" ]
         [ header [ class "text-center" ]
             [ h1
-                [ class "display-4"
+                [ class "lead"
                 , property "innerHTML" (Encode.string """
                     &ldquo;Unlike some politicians, I can admin to a mistake.
                     <small>– Nelson Mandela</small>
                 """)
                 ]
                 []
+            , p [ class "text-center" ]
+                [ text "I made a mistake while processing your data and my circuits blew up. Sorry!"
+                ]
+            , div [ class "text-center py-4" ]
+                [ button [ class "btn btn-secondary btn-lg", onClick StartOver ]
+                    [ text "Start Over"
+                    ]
+                ]
             ]
         ]
 
@@ -1048,18 +967,6 @@ loadingMessage label =
         ]
 
 
-findCategoryGroup : Maybe (List CategoryGroup) -> String -> Maybe CategoryGroup
-findCategoryGroup maybeCategoryGroups categoryGroupId =
-    case maybeCategoryGroups of
-        Nothing ->
-            Nothing
-
-        Just categoryGroups ->
-            categoryGroups
-                |> List.filter (\cg -> cg.id == categoryGroupId)
-                |> List.head
-
-
 totalDebtAmount : Model -> Int
 totalDebtAmount model =
     model.session.accounts
@@ -1072,8 +979,8 @@ totalDebtAmount model =
 -- CHART CONFIG
 
 
-chartConfig : PaymentStrategy -> List Payment -> LineChart.Config Payment Msg
-chartConfig paymentStrategy hintedPayments =
+chartConfig : List Payment -> LineChart.Config Payment Msg
+chartConfig hintedPayments =
     { y = LineChart.Axis.default 450 "balance" (\p -> (toFloat p.balance) / 1000)
     , x = LineChart.Axis.default 1270 "month" (.number >> toFloat)
     , container = containerConfig

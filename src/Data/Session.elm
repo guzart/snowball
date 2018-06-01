@@ -1,10 +1,9 @@
-module Data.Session exposing (Session, decoder, empty, encode, setBudget, setCategory, setToken, toggleAccount, updateDebtDetails)
+module Data.Session exposing (Session, decoder, empty, encode, minPaymentsTotal, setAmount, setBudget, setToken, toggleAccount, updateDebtDetails)
 
 import Data.AccessToken as AccessToken exposing (AccessToken(..))
 import Data.Account as Account exposing (Account)
 import Data.Budget as Budget exposing (Budget)
 import Data.DebtDetail as DebtDetail exposing (DebtDetail)
-import Data.Category as Category exposing (Category)
 import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (decode, optional, required)
@@ -19,7 +18,7 @@ type alias Session =
     , budget : Maybe Budget
     , accounts : Maybe (List Account)
     , debtDetails : Maybe (Dict String DebtDetail)
-    , category : Maybe Category
+    , amount : Maybe Int
     }
 
 
@@ -29,7 +28,7 @@ empty =
     , budget = Nothing
     , accounts = Nothing
     , debtDetails = Nothing
-    , category = Nothing
+    , amount = Nothing
     }
 
 
@@ -44,7 +43,7 @@ setBudget budget session =
         | budget = budget
         , accounts = Nothing
         , debtDetails = Nothing
-        , category = Nothing
+        , amount = Nothing
     }
 
 
@@ -101,9 +100,22 @@ findOrInitDebtDetail maybeDebtDetails account =
             Maybe.withDefault (DebtDetail.init account.id account.balance) (Dict.get account.id debtDetails)
 
 
-setCategory : Maybe Category -> Session -> Session
-setCategory category session =
-    { session | category = category }
+setAmount : Maybe Int -> Session -> Session
+setAmount amount session =
+    { session | amount = amount }
+
+
+minPaymentsTotal : Session -> Int
+minPaymentsTotal session =
+    case session.debtDetails of
+        Nothing ->
+            0
+
+        Just debtDetails ->
+            debtDetails
+                |> Dict.values
+                |> List.map .minPayment
+                |> List.sum
 
 
 
@@ -117,7 +129,7 @@ decoder =
         |> optional "budget" (Decode.maybe Budget.decoder) Nothing
         |> optional "accounts" (Decode.maybe (Decode.list Account.decoder)) Nothing
         |> optional "debtDetails" (Decode.maybe (Decode.dict DebtDetail.decoder)) Nothing
-        |> optional "category" (Decode.maybe Category.decoder) Nothing
+        |> optional "amount" (Decode.maybe Decode.int) Nothing
 
 
 encode : Session -> Value
@@ -127,15 +139,5 @@ encode session =
         , "budget" => EncodeExtra.maybe Budget.encode session.budget
         , "accounts" => EncodeExtra.maybe (\accounts -> Encode.list (List.map Account.encode accounts)) session.accounts
         , "debtDetails" => EncodeExtra.maybe (\debtDetails -> Encode.object (List.map (Tuple.mapSecond DebtDetail.encode) (Dict.toList debtDetails))) session.debtDetails
-        , "category" => EncodeExtra.maybe Category.encode session.category
+        , "amount" => EncodeExtra.maybe Encode.int session.amount
         ]
-
-
-
--- attempt : String -> (AccessToken -> Cmd msg) -> Session -> ( List String, Cmd msg )
--- attempt attemptedAction toCmd session =
---     case session.token of
---         Nothing ->
---             [ "You have been signed out. Please sign back in to " ++ attemptedAction ++ "." ] => Cmd.none
---         Just token ->
---             [] => toCmd token
