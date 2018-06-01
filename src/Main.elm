@@ -262,7 +262,10 @@ update msg model =
             case result of
                 Ok accounts ->
                     ( { model
-                        | accounts = Just accounts
+                        | accounts =
+                            accounts
+                                |> List.filter (\a -> (not a.closed) && a.balance < 0)
+                                |> Just
                         , isLoadingScreenData = False
                       }
                     , Cmd.none
