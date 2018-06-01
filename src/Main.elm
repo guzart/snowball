@@ -545,6 +545,7 @@ viewWelcome model =
         , div [ class "text-center py-4" ]
             [ loaderButton "Connecting to YNAB..." "Connect to YNAB" model.isRequestingAccessToken [ class "btn btn-primary btn-lg", onClick RequestAccessToken ]
             ]
+        , Footer.view
         ]
 
 
