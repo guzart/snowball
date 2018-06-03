@@ -9,7 +9,10 @@ yarn-error.log*
 .env
 
 elm-stuff/build-artifacts
+elm-stuff/generated-code
 elm-stuff/packages
 node_modules/
+tests/elm-stuff/build-artifacts
+tests/elm-stuff/packages
 
 dist/

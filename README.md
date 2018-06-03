@@ -2,6 +2,8 @@
 
 ## TODO
 
+Perform validate on minimum payment.
+
 ### Alpha Release
 
 * [ ] "start over" button

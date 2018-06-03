@@ -37,7 +37,8 @@ initHighestBalanceFirst debtDetails monthlyAmount =
     let
         sortedDetails =
             debtDetails
-                |> List.sortBy .balance
+                |> List.sortBy (.balance >> abs)
+                |> List.reverse
     in
         initPaymentStrategy "Highest Balance First" sortedDetails monthlyAmount
 
@@ -160,16 +161,17 @@ applyPaymentToSchedule : Int -> Schedule -> Schedule
 applyPaymentToSchedule amount schedule =
     let
         periodRate =
-            round (schedule.rate * 1000 / 12)
+            schedule.rate / 100 / 12
 
         interest =
-            round (toFloat (schedule.balance * periodRate) / 100000)
+            (round ((toFloat schedule.balance) / 10 * periodRate))
+                * 10
 
         payment =
             { amount = amount
             , principal = amount - interest
             , interest = interest
-            , balance = max 0 (schedule.balance - amount)
+            , balance = max 0 (schedule.balance - amount + interest)
             , number = (List.length schedule.payments) + 1
             }
     in
