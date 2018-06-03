@@ -1,4 +1,4 @@
-module Util exposing ((=>), toCurrency)
+module Util exposing ((=>), toCurrency, toDuration)
 
 import Regex
 
@@ -12,7 +12,7 @@ toCurrency : Int -> String
 toCurrency amount =
     let
         cents =
-            toString (rem amount 1000)
+            toString (rem (abs amount) 1000)
 
         centsFormatted =
             if (String.length cents) == 1 then
@@ -35,3 +35,15 @@ toCurrency amount =
                 ""
     in
         negativeSymbol ++ "$" ++ dollarsFormatted ++ "." ++ centsFormatted
+
+
+toDuration : Int -> String
+toDuration totalMonths =
+    let
+        years =
+            totalMonths // 12
+
+        months =
+            totalMonths % 12
+    in
+        (toString years) ++ " years " ++ (toString months) ++ " months"
