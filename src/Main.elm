@@ -33,7 +33,7 @@ import Request.Budget as BudgetRequest
 import Screen.DebtDetails as DebtDetails
 import Views.Assets exposing (assets)
 import Views.Footer as Footer
-import Util exposing ((=>), toCurrency)
+import Util exposing ((=>), toCurrency, toDuration)
 
 
 -- INIT
@@ -685,30 +685,14 @@ viewPaymentStrategiesContent model =
                 [ p [ class "mb-0 text-center text-uppercase text-muted" ]
                     [ small [] [ text "Total Debt" ] ]
                 , h3
-                    [ class "text-center text-danger display-4 mb-2" ]
+                    [ class "text-center text-danger h1 mb-2" ]
                     [ text (toCurrency (totalDebtAmount model))
                     ]
                 , p [ class "mb-0 text-center text-uppercase text-muted" ]
                     [ small [] [ text "Debt Budget" ] ]
                 , h3
-                    [ class "text-center text-success display-4 mb-4 d-flex" ]
-                    [ span [] [ text "$ " ]
-                    , input
-                        [ type_ "number"
-                        , class "text-center text-success"
-                        , onInput
-                            (\v ->
-                                SetAmount
-                                    ((String.toFloat v)
-                                        |> Result.toMaybe
-                                        |> Maybe.map (\v -> round (v * 1000))
-                                    )
-                            )
-                        , Html.Attributes.min (toString amount)
-                        , step "10"
-                        , defaultValue (toString amount)
-                        ]
-                        []
+                    [ class "mb-4 text-center text-success display-4" ]
+                    [ text ("$" ++ (toString amount))
                     ]
                 , viewPaymentStrategiesList model.paymentStrategies
                 , div [ class "d-flex mt-4" ]
@@ -744,7 +728,7 @@ viewPaymentStrategiesList maybePaymentStrategies =
                             , div
                                 [ class "align-self-center font-weight-bold"
                                 ]
-                                [ text ((toString paymentStrategy.months) ++ " months") ]
+                                [ text (toDuration paymentStrategy.months) ]
                             ]
                     )
                     paymentStrategies
