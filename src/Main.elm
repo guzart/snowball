@@ -693,7 +693,7 @@ viewPaymentStrategiesContent model =
                     [ text (toCurrency totalDebt)
                     ]
                 , p [ class "mb-0 text-center text-uppercase text-muted" ]
-                    [ small [] [ text "Debt Budget" ] ]
+                    [ small [] [ text "Monthly Debt Budget" ] ]
                 , h3
                     [ class "text-center text-success display-4" ]
                     [ text (toCurrency amount)
