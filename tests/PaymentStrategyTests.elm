@@ -31,9 +31,9 @@ debtDetails =
     ]
 
 
-highestBalanceFirstStrategy : PaymentStrategy
-highestBalanceFirstStrategy =
-    PaymentStrategy.initHighestBalanceFirst debtDetails paymentBalance
+highestBalanceFirstStrategy : Int -> PaymentStrategy
+highestBalanceFirstStrategy balance =
+    PaymentStrategy.initHighestBalanceFirst debtDetails balance
 
 
 suite : Test
@@ -43,8 +43,11 @@ suite =
             [ test "account with the highest balance account is the first" <|
                 \_ ->
                     let
+                        strategy =
+                            highestBalanceFirstStrategy paymentBalance
+
                         accountId =
-                            List.head highestBalanceFirstStrategy.schedules
+                            List.head strategy.schedules
                                 |> Maybe.map .accountId
                                 |> Maybe.withDefault ""
                     in
@@ -52,8 +55,11 @@ suite =
             , test "first balance is paid in 88 months" <|
                 \_ ->
                     let
+                        strategy =
+                            highestBalanceFirstStrategy paymentBalance
+
                         totalMonths =
-                            List.head highestBalanceFirstStrategy.schedules
+                            List.head strategy.schedules
                                 |> Maybe.map .totalMonths
                                 |> Maybe.withDefault 0
                     in
@@ -61,8 +67,11 @@ suite =
             , test "first account balance after first payment is $6,707.23" <|
                 \_ ->
                     let
+                        strategy =
+                            highestBalanceFirstStrategy paymentBalance
+
                         firstPaymentBalance =
-                            List.head highestBalanceFirstStrategy.schedules
+                            List.head strategy.schedules
                                 |> Maybe.map .payments
                                 |> Maybe.withDefault []
                                 |> List.head
@@ -73,8 +82,11 @@ suite =
             , test "first account first payment amount is $126.91" <|
                 \_ ->
                     let
+                        strategy =
+                            highestBalanceFirstStrategy paymentBalance
+
                         firstPaymentAmount =
-                            List.head highestBalanceFirstStrategy.schedules
+                            List.head strategy.schedules
                                 |> Maybe.map .payments
                                 |> Maybe.withDefault []
                                 |> List.head
@@ -85,8 +97,11 @@ suite =
             , test "first account first payment interest is $84.26" <|
                 \_ ->
                     let
+                        strategy =
+                            highestBalanceFirstStrategy paymentBalance
+
                         firstPaymentInterest =
-                            List.head highestBalanceFirstStrategy.schedules
+                            List.head strategy.schedules
                                 |> Maybe.map .payments
                                 |> Maybe.withDefault []
                                 |> List.head
@@ -94,5 +109,21 @@ suite =
                                 |> Maybe.withDefault 0
                     in
                         Expect.equal firstPaymentInterest 84260
+            , test "extra payment spills to next debt" <|
+                \_ ->
+                    let
+                        strategy =
+                            highestBalanceFirstStrategy 15520450
+
+                        lastScheduleFirstPaymentBalance =
+                            List.reverse strategy.schedules
+                                |> List.head
+                                |> Maybe.map .payments
+                                |> Maybe.withDefault []
+                                |> List.head
+                                |> Maybe.map .balance
+                                |> Maybe.withDefault 499
+                    in
+                        Expect.equal lastScheduleFirstPaymentBalance 0
             ]
         ]

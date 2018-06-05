@@ -107,54 +107,55 @@ initSchedules debtDetails =
 
 generateSchedules : Int -> List Schedule -> Int -> List Schedule
 generateSchedules monthlyAmount schedules count =
-    let
-        maybeScheduleForExtra =
-            schedules
-                |> List.filter (\s -> s.balance > 0)
-                |> List.head
-    in
-        case maybeScheduleForExtra of
-            Nothing ->
+    if (List.isEmpty (List.filter (\s -> s.balance > 0) schedules)) || count > 420 then
+        -- All debts are paid or it's been too long
+        schedules
+    else
+        let
+            minPayments =
                 schedules
+                    |> List.map (\s -> min s.balance s.minPayment)
+                    |> List.sum
 
-            Just scheduleForExtra ->
-                if count > 420 then
-                    schedules
-                else
-                    let
-                        minPayments =
-                            schedules
-                                |> List.map (\s -> min s.balance s.minPayment)
-                                |> List.sum
+            -- Budget remaining after minimum payments
+            extra =
+                monthlyAmount - minPayments
 
-                        -- Extra after payin minimums
-                        extra =
-                            monthlyAmount - minPayments
+            newSchedules =
+                schedules
+                    |> List.foldl
+                        (\schedule ( outSchedules, remainingExtra ) ->
+                            let
+                                minPayment =
+                                    min schedule.balance schedule.minPayment
 
-                        newSchedules =
-                            schedules
-                                |> List.map
-                                    (\s ->
-                                        let
-                                            minPayment =
-                                                min s.balance s.minPayment
+                                extraPayment =
+                                    -- If there's a balance after the min payment
+                                    if schedule.balance > minPayment then
+                                        -- Then the extra payment is either whatever there's left in the extra, or
+                                        -- whatever balance is left
+                                        min remainingExtra schedule.balance
+                                    else
+                                        0
 
-                                            extraPayment =
-                                                if s.accountId == scheduleForExtra.accountId then
-                                                    extra
-                                                else
-                                                    0
+                                paymentAmount =
+                                    minPayment + extraPayment
 
-                                            paymentAmount =
-                                                (minPayment + extraPayment)
-                                        in
-                                            if paymentAmount > 0 then
-                                                applyPaymentToSchedule paymentAmount s
-                                            else
-                                                s
-                                    )
-                    in
-                        generateSchedules monthlyAmount newSchedules (count + 1)
+                                newSchedule =
+                                    if paymentAmount > 0 then
+                                        applyPaymentToSchedule paymentAmount schedule
+                                    else
+                                        schedule
+
+                                newRemainingExtra =
+                                    remainingExtra - extraPayment
+                            in
+                                ( outSchedules ++ [ newSchedule ], newRemainingExtra )
+                        )
+                        ( [], extra )
+                    |> Tuple.first
+        in
+            generateSchedules monthlyAmount newSchedules (count + 1)
 
 
 applyPaymentToSchedule : Int -> Schedule -> Schedule

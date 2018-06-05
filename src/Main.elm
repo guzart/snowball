@@ -679,9 +679,6 @@ viewPaymentStrategiesContent model =
         amount =
             model.session.amount
                 |> Maybe.withDefault minAmount
-
-        _ =
-            Debug.log "mtof" (totalDebt |> abs >> toFloat)
     in
         section [ class "o-payment-strategies" ]
             [ header [ class "text-center" ]
@@ -705,8 +702,17 @@ viewPaymentStrategiesContent model =
                     [ input
                         [ type_ "range"
                         , Html.Attributes.min (minAmount |> milliDollarToFloat >> ceiling >> toString)
-                        , Html.Attributes.max (totalDebt |> abs >> milliDollarToFloat >> (\n -> n / 1) >> ceiling >> toString)
-                        , step "10"
+                        , Html.Attributes.max
+                            (totalDebt
+                                |> abs
+                                >> milliDollarToFloat
+                                >> (\n -> n / 4)
+                                >> Basics.min (milliDollarToFloat minAmount)
+                                >> Basics.max 5000.0
+                                >> ceiling
+                                >> toString
+                            )
+                        , step "1"
                         , defaultValue (amount |> milliDollarToFloat >> toString)
                         , onInput (SetAmount << (String.toFloat >> Result.toMaybe >> Maybe.map toMilliDollars))
                         ]
