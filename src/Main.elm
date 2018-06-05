@@ -33,7 +33,7 @@ import Request.Budget as BudgetRequest
 import Screen.DebtDetails as DebtDetails
 import Views.Assets exposing (assets)
 import Views.Footer as Footer
-import Util exposing ((=>), toCurrency, toDuration)
+import Util exposing ((=>), milliDollarToFloat, toCurrency, toDuration, toMilliDollars)
 
 
 -- INIT
@@ -670,11 +670,18 @@ viewPaymentStrategiesContent model =
                 |> Maybe.map .name
                 |> Maybe.withDefault ""
 
+        totalDebt =
+            totalDebtAmount model
+
+        minAmount =
+            Session.minPaymentsTotal model.session
+
         amount =
             model.session.amount
-                |> Maybe.withDefault (Session.minPaymentsTotal model.session)
-                |> toFloat
-                |> (\n -> n / 1000)
+                |> Maybe.withDefault minAmount
+
+        _ =
+            Debug.log "mtof" (totalDebt |> abs >> toFloat)
     in
         section [ class "o-payment-strategies" ]
             [ header [ class "text-center" ]
@@ -686,13 +693,24 @@ viewPaymentStrategiesContent model =
                     [ small [] [ text "Total Debt" ] ]
                 , h3
                     [ class "text-center text-danger h1 mb-2" ]
-                    [ text (toCurrency (totalDebtAmount model))
+                    [ text (toCurrency totalDebt)
                     ]
                 , p [ class "mb-0 text-center text-uppercase text-muted" ]
                     [ small [] [ text "Debt Budget" ] ]
                 , h3
-                    [ class "mb-4 text-center text-success display-4" ]
-                    [ text ("$" ++ (toString amount))
+                    [ class "text-center text-success display-4" ]
+                    [ text (toCurrency amount)
+                    ]
+                , div [ class "mb-4 text-center" ]
+                    [ input
+                        [ type_ "range"
+                        , Html.Attributes.min (minAmount |> milliDollarToFloat >> ceiling >> toString)
+                        , Html.Attributes.max (totalDebt |> abs >> milliDollarToFloat >> (\n -> n / 1) >> ceiling >> toString)
+                        , step "10"
+                        , defaultValue (amount |> milliDollarToFloat >> toString)
+                        , onInput (SetAmount << (String.toFloat >> Result.toMaybe >> Maybe.map toMilliDollars))
+                        ]
+                        []
                     ]
                 , viewPaymentStrategiesList model.paymentStrategies
                 , div [ class "d-flex mt-4" ]

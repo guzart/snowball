@@ -1,4 +1,4 @@
-module Util exposing ((=>), toCurrency, toDuration)
+module Util exposing ((=>), milliDollarToFloat, toCurrency, toDuration, toMilliDollars)
 
 import Regex
 
@@ -6,6 +6,11 @@ import Regex
 (=>) : a -> b -> ( a, b )
 (=>) =
     (,)
+
+
+milliDollarToFloat : Int -> Float
+milliDollarToFloat milliDollar =
+    (toFloat milliDollar) / 1000.0
 
 
 toCurrency : Int -> String
@@ -47,3 +52,8 @@ toDuration totalMonths =
             totalMonths % 12
     in
         (toString years) ++ " years " ++ (toString months) ++ " months"
+
+
+toMilliDollars : Float -> Int
+toMilliDollars milliDollars =
+    floor (milliDollars * 1000)
