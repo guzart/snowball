@@ -8,10 +8,10 @@
   "scripts": {
     "build": "NODE_ENV=production webpack",
     "clean": "test -z dist || rm -rf dist",
-    "deploy": "yarn clean && yarn build && firebase deploy --only hosting",
+    "deploy": "npm run clean && npm run build && firebase deploy --only hosting",
     "dev": "webpack-dev-server --hot --inline",
-    "setup": "npm i -g firebase-tools elm-test && yarn install",
-    "start": "concurrently 'yarn dev' 'yarn tapes'",
+    "setup": "npm i -g firebase-tools elm-test",
+    "start": "concurrently 'npm run dev' 'npm run tapes'",
     "tapes": "ts-node -O '{\"module\":\"commonjs\"}' lib/tapesServer.ts"
   },
   "devDependencies": {
