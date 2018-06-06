@@ -126,8 +126,12 @@ $enable-shadows: true;
   @include list-group-selectable();
 }
 
-// .o-payment-strategy {
-// }
+.o-payment-strategy {
+  section {
+    margin: auto;
+    max-width: 70rem;
+  }
+}
 
 .o-site-toolbar {
   margin: auto;
