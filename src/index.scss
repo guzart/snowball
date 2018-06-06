@@ -139,6 +139,11 @@ $enable-shadows: true;
 }
 
 .o-payment-strategy {
+  section {
+    margin: auto;
+    max-width: 70rem;
+  }
+
   footer {
     margin: auto;
     max-width: 30rem;
