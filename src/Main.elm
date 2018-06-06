@@ -907,7 +907,7 @@ viewErrorContent model =
 
 viewScreen : (Model -> Html Msg) -> Model -> Html Msg
 viewScreen content model =
-    div [ class "container" ]
+    div [ class "container-fluid" ]
         [ viewErrorAlert model.errorMessage
         , viewToolbar model
         , content model
