@@ -1,4 +1,4 @@
-module Util exposing ((=>), milliDollarToFloat, toCurrency, toDuration, toMilliDollars)
+module Util exposing ((=>), milliDollarToFloat, pluralize, toCurrency, toDuration, toMilliDollars)
 
 import Regex
 
@@ -51,9 +51,18 @@ toDuration totalMonths =
         months =
             totalMonths % 12
     in
-        (toString years) ++ " years " ++ (toString months) ++ " months"
+        -- (toString years) ++ " yr " ++ (toString months) ++ " mo"
+        (pluralize "year" "years" years) ++ " " ++ (pluralize "month" "months" months)
 
 
 toMilliDollars : Float -> Int
 toMilliDollars milliDollars =
     floor (milliDollars * 1000)
+
+
+pluralize : String -> String -> number -> String
+pluralize singular plural count =
+    if count == 1 then
+        "1 " ++ singular
+    else
+        (toString count) ++ " " ++ plural

@@ -110,7 +110,7 @@ type alias Model =
     , debtDetails : DebtDetails.Model
     , amount : Maybe String
     , paymentStrategies : Maybe (List PaymentStrategy)
-    , currentPaymentStrategy : Maybe PaymentStrategy
+    , currentPaymentStrategyName : Maybe String
     , today : Maybe Date
     , chartHintedPayments : List Payment
     }
@@ -129,7 +129,7 @@ modelInitialValue =
     , debtDetails = DebtDetails.init Nothing
     , amount = Nothing
     , paymentStrategies = Nothing
-    , currentPaymentStrategy = Nothing
+    , currentPaymentStrategyName = Nothing
     , today = Nothing
     , chartHintedPayments = []
     }
@@ -141,7 +141,6 @@ type Screen
     | ChooseAccountsScreen
     | DebtDetailsScreen
     | PaymentStrategiesScreen
-    | PaymentStrategyScreen
     | ErrorScreen
 
 
@@ -190,7 +189,7 @@ type Msg
     | GoToChooseAccounts
     | GoToDebtDetails
     | GoToPaymentStrategies
-    | GoToPaymentStrategy PaymentStrategy
+    | SelectPaymentStrategy String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -355,12 +354,8 @@ update msg model =
             in
                 newModel => Cmd.batch [ saveSession newModel.session, newCmd ]
 
-        GoToPaymentStrategy paymentStrategy ->
-            { model
-                | currentScreen = PaymentStrategyScreen
-                , currentPaymentStrategy = Just paymentStrategy
-            }
-                => Cmd.none
+        SelectPaymentStrategy name ->
+            { model | currentPaymentStrategyName = Just name } => Cmd.none
 
 
 saveSession : Session -> Cmd msg
@@ -475,9 +470,6 @@ view model =
 
         PaymentStrategiesScreen ->
             viewPaymentStrategies model
-
-        PaymentStrategyScreen ->
-            viewPaymentStrategy model
 
         _ ->
             viewError model
@@ -680,100 +672,104 @@ viewPaymentStrategiesContent model =
             model.session.amount
                 |> Maybe.withDefault minAmount
     in
-        section [ class "o-payment-strategies" ]
-            [ header [ class "text-center" ]
-                [ h1 [] [ text budgetName ]
-                , h2 [ class "h4" ] [ text "Payment Strategies" ]
-                ]
-            , section [ class "py-4" ]
-                [ p [ class "mb-0 text-center text-uppercase text-muted" ]
-                    [ small [] [ text "Total Debt" ] ]
-                , h3
-                    [ class "text-center text-danger h1 mb-2" ]
-                    [ text (toCurrency totalDebt)
+        section [ class "o-payment-strategies row justify-content-start" ]
+            [ div [ class "col-lg-4" ]
+                [ header [ class "text-center" ]
+                    [ h1 [] [ text budgetName ]
+                    , h2 [ class "h4" ] [ text "Payment Strategies" ]
                     ]
-                , p [ class "mb-0 text-center text-uppercase text-muted" ]
-                    [ small [] [ text "Monthly Debt Budget" ] ]
-                , h3
-                    [ class "text-center text-success display-4" ]
-                    [ text (toCurrency amount)
-                    ]
-                , div [ class "mb-4 text-center" ]
-                    [ input
-                        [ type_ "range"
-                        , Html.Attributes.min (minAmount |> milliDollarToFloat >> ceiling >> toString)
-                        , Html.Attributes.max
-                            (totalDebt
-                                |> abs
-                                >> milliDollarToFloat
-                                >> (\n -> n / 4)
-                                >> Basics.min (milliDollarToFloat minAmount)
-                                >> Basics.max 5000.0
-                                >> ceiling
-                                >> toString
-                            )
-                        , step "1"
-                        , defaultValue (amount |> milliDollarToFloat >> toString)
-                        , onInput (SetAmount << (String.toFloat >> Result.toMaybe >> Maybe.map toMilliDollars))
+                , section [ class "py-4" ]
+                    [ p [ class "mb-0 text-center text-uppercase text-muted" ]
+                        [ small [] [ text "Total Debt" ] ]
+                    , h3
+                        [ class "text-center text-danger h1 mb-2" ]
+                        [ text (toCurrency totalDebt)
                         ]
-                        []
-                    ]
-                , viewPaymentStrategiesList model.paymentStrategies
-                , div [ class "d-flex mt-4" ]
-                    [ button
-                        [ class "btn btn-outline-dark mr-auto"
-                        , onClick GoToDebtDetails
+                    , p [ class "mb-0 text-center text-uppercase text-muted" ]
+                        [ small [] [ text "Monthly Debt Budget" ] ]
+                    , h3
+                        [ class "text-center text-success display-4" ]
+                        [ text (toCurrency amount)
                         ]
-                        [ text "Back" ]
+                    , div [ class "mb-4 text-center" ]
+                        [ input
+                            [ type_ "range"
+                            , Html.Attributes.min (minAmount |> milliDollarToFloat >> ceiling >> toString)
+                            , Html.Attributes.max
+                                (totalDebt
+                                    |> abs
+                                    >> milliDollarToFloat
+                                    >> (\n -> n / 4)
+                                    >> Basics.min (milliDollarToFloat minAmount)
+                                    >> Basics.max 5000.0
+                                    >> ceiling
+                                    >> toString
+                                )
+                            , step "1"
+                            , defaultValue (amount |> milliDollarToFloat >> toString)
+                            , onInput (SetAmount << (String.toFloat >> Result.toMaybe >> Maybe.map toMilliDollars))
+                            ]
+                            []
+                        ]
+                    , viewPaymentStrategiesList model.paymentStrategies model.currentPaymentStrategyName
+                    , div [ class "d-flex mt-4" ]
+                        [ button
+                            [ class "btn btn-outline-dark mr-auto"
+                            , onClick GoToDebtDetails
+                            ]
+                            [ text "Back" ]
+                        ]
                     ]
                 ]
+            , div [ class "col-lg-8" ]
+                [ viewPaymentStrategyContent model ]
             ]
 
 
-viewPaymentStrategiesList : Maybe (List PaymentStrategy) -> Html Msg
-viewPaymentStrategiesList maybePaymentStrategies =
+viewPaymentStrategiesList : Maybe (List PaymentStrategy) -> Maybe String -> Html Msg
+viewPaymentStrategiesList maybePaymentStrategies maybeSelectedStrategyName =
     case maybePaymentStrategies of
         Nothing ->
             p [ class "text-center" ] [ text "No payment strategies." ]
 
         Just paymentStrategies ->
-            div [ class "list-group" ]
-                (List.map
-                    (\paymentStrategy ->
-                        div
-                            [ class "list-group-item d-flex"
-                            , onClick (GoToPaymentStrategy paymentStrategy)
-                            ]
-                            [ div [ class "mr-auto" ]
-                                [ h5 [ class "mb-0" ] [ text paymentStrategy.name ]
-                                , small [ class "text-uppercase text-muted font-weight-light" ]
-                                    [ text ("Interest Paid " ++ (toCurrency paymentStrategy.interest)) ]
+            let
+                selectedName =
+                    Maybe.withDefault "~~~~~~~~~~" maybeSelectedStrategyName
+            in
+                div [ class "list-group" ]
+                    (List.map
+                        (\paymentStrategy ->
+                            div
+                                [ class "list-group-item d-flex"
+                                , classList [ ( "selected", selectedName == paymentStrategy.name ) ]
+                                , onClick (SelectPaymentStrategy paymentStrategy.name)
                                 ]
-                            , div
-                                [ class "align-self-center font-weight-bold"
+                                [ div [ class "mr-auto" ]
+                                    [ h5 [ class "mb-0" ] [ text paymentStrategy.name ]
+                                    , small [ class "text-uppercase text-muted font-weight-light" ]
+                                        [ text ("Interest Paid " ++ (toCurrency paymentStrategy.interest)) ]
+                                    ]
+                                , div
+                                    [ class "align-self-center font-weight-bold"
+                                    ]
+                                    [ text (toDuration paymentStrategy.months) ]
                                 ]
-                                [ text (toDuration paymentStrategy.months) ]
-                            ]
+                        )
+                        paymentStrategies
                     )
-                    paymentStrategies
-                )
-
-
-viewPaymentStrategy : Model -> Html Msg
-viewPaymentStrategy model =
-    viewScreen viewPaymentStrategyContent model
 
 
 viewPaymentStrategyContent : Model -> Html Msg
 viewPaymentStrategyContent model =
     let
         maybePaymentStrategy =
-            model.currentPaymentStrategy
+            getSelectedPaymentStrategy model
 
         title =
             maybePaymentStrategy
                 |> Maybe.map .name
-                |> Maybe.withDefault "Payment Strategy Not Found"
+                |> Maybe.withDefault ""
 
         paymentChart =
             case ( model.session.accounts, maybePaymentStrategy ) of
@@ -784,19 +780,9 @@ viewPaymentStrategyContent model =
                     viewEmpty
     in
         section [ class "o-payment-strategy" ]
-            [ header [ class "text-center" ]
-                [ h1 [] [ text title ]
-                ]
+            [ header [ class "text-center" ] [ h3 [] [ text title ] ]
             , section [ class "py-4" ]
-                [ paymentChart
-                , footer [ class "d-flex mt-4" ]
-                    [ button
-                        [ class "btn btn-outline-dark mr-auto"
-                        , onClick GoToPaymentStrategies
-                        ]
-                        [ text "Back" ]
-                    ]
-                ]
+                [ paymentChart ]
             ]
 
 
@@ -935,7 +921,7 @@ viewToolbar model =
             viewEmpty
 
         Just _ ->
-            div []
+            div [ class "o-site-toolbar" ]
                 [ ul [ class "nav justify-content-end" ]
                     [ li [ class "nav-item" ] [ button [ class "nav-link btn btn-link btn-sm", onClick Disconnect ] [ text "Disconnect" ] ]
                     ]
@@ -989,8 +975,8 @@ totalDebtAmount model =
 
 chartConfig : List Payment -> LineChart.Config Payment Msg
 chartConfig hintedPayments =
-    { y = LineChart.Axis.default 450 "balance" (\p -> (toFloat p.balance) / 1000)
-    , x = LineChart.Axis.default 1270 "month" (.number >> toFloat)
+    { y = LineChart.Axis.default 450 "Balance" (\p -> (toFloat p.balance) / 1000)
+    , x = LineChart.Axis.default 1270 "Month" (.number >> toFloat)
     , container = containerConfig
     , interpolation = LineChart.Interpolation.linear
     , intersection = LineChart.Axis.Intersection.default
@@ -1023,3 +1009,16 @@ containerConfig =
         , margin = LineChart.Container.Margin 32 192 32 96
         , id = "line-chart-area"
         }
+
+
+getSelectedPaymentStrategy : Model -> Maybe PaymentStrategy
+getSelectedPaymentStrategy model =
+    let
+        currentName =
+            model.currentPaymentStrategyName
+                |> Maybe.withDefault "~~~~~~~~~~~~~~"
+    in
+        model.paymentStrategies
+            |> Maybe.withDefault []
+            |> List.filter (.name >> (==) currentName)
+            |> List.head

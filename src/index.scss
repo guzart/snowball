@@ -123,26 +123,15 @@ $enable-shadows: true;
 }
 
 .o-payment-strategies {
-  section {
-    margin: auto;
-    max-width: 30rem;
-  }
-
-  .list-group-item {
-    cursor: pointer;
-
-    &:hover {
-      background-color: $gray-200;
-      transition: background-color 0.2s ease;
-    }
-  }
+  @include list-group-selectable();
 }
 
-.o-payment-strategy {
-  footer {
-    margin: auto;
-    max-width: 30rem;
-  }
+// .o-payment-strategy {
+// }
+
+.o-site-toolbar {
+  margin: auto;
+  max-width: 42rem;
 }
 
 .o-site-footer {
