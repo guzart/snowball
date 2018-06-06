@@ -1,4 +1,7 @@
 {
+  "[json5]": {
+    "editor.formatOnSave": false
+  },
   "[scss]": {
     "editor.formatOnSave": true
   },

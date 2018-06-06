@@ -1,81 +1,79 @@
 {
     meta: {
-        createdAt: "2018-05-07T00:25:49.803Z",
-        host: "https://api.youneedabudget.com/v1"
+        createdAt: '2018-06-06T04:41:05.031Z',
+        host: 'https://api.youneedabudget.com/v1',
     },
     req: {
-        url: "/budgets/",
-        method: "GET",
+        url: '/budgets/',
+        method: 'GET',
         headers: {
-            connection: "keep-alive",
-            pragma: "no-cache",
-            "cache-control": "no-cache",
-            origin: "https://snowball.guzart.com:8080",
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36",
-            accept: "*/*",
-            "accept-encoding": "gzip, deflate, br",
-            "accept-language": "en,es;q=0.9,en-US;q=0.8,es-419;q=0.7"
+            connection: 'keep-alive',
+            origin: 'https://snowball.guzart.com:8080',
+            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36',
+            accept: '*/*',
+            'accept-encoding': 'gzip, deflate, br',
+            'accept-language': 'en,es;q=0.9,en-US;q=0.8,es-419;q=0.7',
         },
-        body: ""
+        body: '',
     },
     res: {
         status: 200,
         headers: {
             server: [
-                "Cowboy"
+                'Cowboy',
             ],
             date: [
-                "Mon, 07 May 2018 00:25:49 GMT"
+                'Wed, 06 Jun 2018 04:41:04 GMT',
             ],
             connection: [
-                "keep-alive"
+                'keep-alive',
             ],
-            "content-type": [
-                "application/json; charset=utf-8"
+            'content-type': [
+                'application/json; charset=utf-8',
             ],
-            "x-rate-limit": [
-                "1/200"
+            'x-rate-limit': [
+                '1/200',
             ],
             vary: [
-                "Accept-Encoding, Origin"
+                'Accept-Encoding, Origin',
             ],
-            "content-encoding": [
-                "gzip"
+            'content-encoding': [
+                'gzip',
             ],
             etag: [
-                "W/\"6cfaf5d30d667818fe130a86657dfcee\""
+                'W/"b2f442430348ca906b46a0bc42d0c335"',
             ],
-            "cache-control": [
-                "max-age=0, private, must-revalidate"
+            'cache-control': [
+                'max-age=0, private, must-revalidate',
             ],
-            "x-request-id": [
-                "2d723e58-8f6d-42c5-89d6-20d140033465"
+            'x-request-id': [
+                'a757a58b-04ee-49fa-b29a-188420d98ed9',
             ],
-            "x-runtime": [
-                "0.065799"
+            'x-runtime': [
+                '0.063958',
             ],
-            "access-control-allow-origin": [
-                "https://snowball.guzart.com:8080"
+            'access-control-allow-origin': [
+                'https://snowball.guzart.com:8080',
             ],
-            "access-control-allow-methods": [
-                "GET, POST, PUT, OPTIONS"
+            'access-control-allow-methods': [
+                'GET, POST, PUT, OPTIONS',
             ],
-            "access-control-max-age": [
-                "1728000"
+            'access-control-max-age': [
+                '1728000',
             ],
-            "access-control-allow-credentials": [
-                "true"
+            'access-control-allow-credentials': [
+                'true',
             ],
-            "strict-transport-security": [
-                "max-age=15552000"
+            'strict-transport-security': [
+                'max-age=15552000',
             ],
-            "transfer-encoding": [
-                "chunked"
+            'transfer-encoding': [
+                'chunked',
             ],
             via: [
-                "1.1 vegur"
-            ]
+                '1.1 vegur',
+            ],
         },
-        body: "H4sIAA6d71oAA+xRwWrEIBT8lfLorXFXTUyCx5LrnrqllFKCUbMrJDEYA12W/Ht1S5stPbQfUA8i47x5896cQQkvgJ+hmdVB+wn4yxmMAg5UpCnNiUKCCI0y1baopFghyQqKqc6ZVAwSGESvA/tJi84fb+4vKgHuxOTr3irTGq1qO0RBTEqEGcL5nmLOKMf0DmOOcaAHF7pureuFj2Y+X7Dbbatq+xwOLAnI2Tk9yNMV00y2llZFC48PVVDSb6Ifu1UMCE2TjOWboox9tDS96GplDiYOS1do0qNwwlsXajaBOp36xnZ1a9wUZLybdQIHZ+fxGzOBK1sfJQG9ja3MNHZiBaNCmOGiFzYz+OP1Tsi6sx8/S/IVSZHmlGAky5ShjLUECZnTcDU6Y4ySUjVrJJVu/N8CYXtKeFZwkv0HctkJ+SWQ12V5BwAA//8DAEDXDiE6AwAA"
-    }
+        body: 'H4sIAOFlF1sAA+xRwU7EIBT8FfPizeICLW2Xo+l1T64xxpiGAt0laUtDaeJm038X1mjXk36AHAiZN8yb9+YMSngB/AzNrA7aT8Bfz2AUcKAiTWlOFBJEaJSptkUlxQpJVlBMdc6kYpDAIHod2M9adP5483BRCXAnJl/3VpnWaFXbIQpiUiLMEN3uScFJxnF6hzHHONCDC1231vXCRzNfL9jtNlW1eQkHlgTk7Jwe5OmKaSZbS6uihafHKijpd9GP3SoGhKZJxvL7oox9tDS96GplDiYOS1do0qNwwlsX/twH6nTqG9vVrXFTkPFu1gkcnJ3HH8wErmx9fgnobWxlprETKxgVwgwXvbCZwR+vdoLJurPrSh4rS/IdSZHmlGAky5ShjLUECZnTcDU6Y4ySUjVrJJVu/B8CCS3SPWacbHnG/gO57IT8EsjbsnwAAAD//wMAJbwARToDAAA=',
+    },
 }
